@@ -1,0 +1,8 @@
+# Python cache
+__pycache__/
+
+# Virtual environment
+venv/
+
+# High scores output file
+highscores.json
