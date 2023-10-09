@@ -6,3 +6,6 @@ venv/
 
 # High scores output file
 highscores.json
+
+# IDEA files
+.idea/
