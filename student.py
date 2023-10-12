@@ -7,7 +7,18 @@ import websockets
 import pprint
 
 
+class Agent:
+    # Placeholder
+    def __init__(self):
+        self.state: dict[str, object] | None = None
+
+    def get_key(self, state: dict[str, object]):
+        self.state = state
+        return ""
+
+
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
+    agent = Agent()
     """Example client loop."""
     async with websockets.connect(f"ws://{server_address}/player") as websocket:
         # Receive information about static game properties
@@ -15,14 +26,16 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
 
         while True:
             try:
-                state = json.loads(
+                # Receive game update.
+                # This must be called timely or your game will get out of sync with the server!
+                state: dict[str, object] = json.loads(
                     await websocket.recv()
-                )  # receive game update, this must be called timely or your game will get out of sync with the server
+                )
 
                 # Print state for debug
                 # pprint.pprint(state)
 
-                key = ""
+                key: str = agent.get_key(state)
                 await websocket.send(
                     json.dumps({"cmd": "key", "key": key})
                 )  # send key command to server - you must implement this send in the AI agent
