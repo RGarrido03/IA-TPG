@@ -6,6 +6,7 @@ import os
 import websockets
 import pprint
 
+import math
 
 class Agent:
     # Placeholder
@@ -14,8 +15,26 @@ class Agent:
 
     def get_key(self, state: dict[str, object]):
         self.state = state
-        return ""
-
+        if "digdug" in self.state:
+            self.pos = self.state["digdug"]
+            for enemy in self.state["enemies"]:
+                dist = math.hypot(enemy["pos"][0] - self.pos[0], enemy["pos"][1] - self.pos[1])
+            
+                if dist <= 3:
+                    return "A"
+                else:
+                    #pressegue o inimigo
+                    if enemy["pos"][0] > self.pos[0]:
+                        return "d"
+                    elif enemy["pos"][0] < self.pos[0]:
+                        return "a"
+                    elif enemy["pos"][1] > self.pos[1]:
+                        return "s"
+                    elif enemy["pos"][1] < self.pos[1]:
+                        return "w"
+                    else:
+                        return " "
+        return " "
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
     agent = Agent()
@@ -33,7 +52,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 )
 
                 # Print state for debug
-                # pprint.pprint(state)
+                pprint.pprint(state)
 
                 key: str = agent.get_key(state)
                 await websocket.send(
