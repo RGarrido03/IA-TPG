@@ -8,9 +8,10 @@ import pprint
 
 import math
 
+
 class Agent:
-    # Placeholder
     def __init__(self):
+        self.pos = None
         self.state: dict[str, object] | None = None
 
     def get_key(self, state: dict[str, object]):
@@ -19,11 +20,11 @@ class Agent:
             self.pos = self.state["digdug"]
             for enemy in self.state["enemies"]:
                 dist = math.hypot(enemy["pos"][0] - self.pos[0], enemy["pos"][1] - self.pos[1])
-            
+
                 if dist <= 3:
                     return "A"
                 else:
-                    #pressegue o inimigo
+                    # persegue o inimigo
                     if enemy["pos"][0] > self.pos[0]:
                         return "d"
                     elif enemy["pos"][0] < self.pos[0]:
@@ -35,6 +36,7 @@ class Agent:
                     else:
                         return " "
         return " "
+
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
     agent = Agent()
