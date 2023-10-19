@@ -94,31 +94,34 @@ class Agent:
                     chosen_enemy = (enemy["pos"][0], enemy["pos"][1], t.cost)
 
             dist = math.hypot(chosen_enemy[0] - self.pos[0], chosen_enemy[1] - self.pos[1])
+            x_dist = chosen_enemy[0] - self.pos[0]
+            y_dist = chosen_enemy[1] - self.pos[1]
 
-            if chosen_enemy[0] > self.pos[0]:
-                if dist <= 3 and self.map[self.pos[0] + 1][self.pos[1]] == 0:
-                    return "A"
-                self.map[self.pos[0] + 1][self.pos[1]] = 0
-                return "d"
-            elif chosen_enemy[0] < self.pos[0]:
-                if dist <= 3 and self.map[self.pos[0] - 1][self.pos[1]] == 0:
-                    return "A"
-                self.map[self.pos[0] - 1][self.pos[1]] = 0
-                return "a"
-            elif chosen_enemy[1] > self.pos[1]:
-                if dist <= 3 and self.map[self.pos[0]][self.pos[1] + 1] == 0:
-                    return "A"
-                self.map[self.pos[0]][self.pos[1] + 1] = 0
-                return "s"
-            elif chosen_enemy[1] < self.pos[1]:
-                if dist <= 3 and self.map[self.pos[0]][self.pos[1] - 1] == 0:
-                    return "A"
-                self.map[self.pos[0]][self.pos[1] - 1] = 0
-                return "w"
+            if abs(x_dist) >= abs(y_dist):
+                if x_dist > 0:
+                    if dist <= 3 and self.map[self.pos[0] + 1][self.pos[1]] == 0:
+                        return "A"
+                    self.map[self.pos[0] + 1][self.pos[1]] = 0
+                    return "d"
+                elif x_dist < 0:
+                    if dist <= 3 and self.map[self.pos[0] - 1][self.pos[1]] == 0:
+                        return "A"
+                    self.map[self.pos[0] - 1][self.pos[1]] = 0
+                    return "a"
             else:
-                return " "
+                if y_dist > 0:
+                    if dist <= 3 and self.map[self.pos[0]][self.pos[1] + 1] == 0:
+                        return "A"
+                    self.map[self.pos[0]][self.pos[1] + 1] = 0
+                    return "s"
+                elif y_dist < 0:
+                    if dist <= 3 and self.map[self.pos[0]][self.pos[1] - 1] == 0:
+                        return "A"
+                    self.map[self.pos[0]][self.pos[1] - 1] = 0
+                    return "w"
+        else:
+            self.map = state["map"]
 
-        self.map = state["map"]
         return " "
 
 
