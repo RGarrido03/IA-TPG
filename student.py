@@ -13,6 +13,42 @@ from cidades import Cidades
 from tree_search import *
 
 
+class PointsGraph(SearchDomain):
+    def __init__(self, connections, coordinates):
+        self.connections = connections
+        self.coordinates = coordinates
+
+    def actions(self, point):
+        actlist = []
+        for (P1, P2, C) in self.connections:
+            if (P1 == point):
+                actlist += [(P1, P2)]
+            elif (P2 == point):
+                actlist += [(P2, P1)]
+        return actlist
+
+    def result(self, point, action):
+        (P1, P2) = action
+        if P1 == point:
+            return P2
+
+    def cost(self, point, action):
+        (A1, A2) = action
+
+        if A1 != point:
+            return None
+
+        for P1, P2, C in self.connections:
+            if (P1, P2) in [(A1, A2), (A2, A1)]:
+                return C
+
+    def heuristic(self, point, goal_point):
+        return math.dist(self.coordinates[point], self.coordinates[goal_point])
+
+    def satisfies(self, point, goal_point):
+        return goal_point == point
+
+
 class Agent:
     def __init__(self):
         self.state: dict = {}
@@ -41,11 +77,12 @@ class Agent:
             connections = []
             coordinates = {}
             for enemy in self.enemies:
-                connections.append(("digdug", enemy["id"], math.hypot(enemy["pos"][0] - self.pos[0], enemy["pos"][1] - self.pos[1])))
+                connections.append(
+                    ("digdug", enemy["id"], math.hypot(enemy["pos"][0] - self.pos[0], enemy["pos"][1] - self.pos[1])))
                 coordinates[enemy["id"]] = tuple(enemy["pos"])
             coordinates["digdug"] = self.pos
 
-            map_points = Cidades(connections, coordinates)
+            map_points = PointsGraph(connections, coordinates)
 
             chosen_enemy = (0, 0, 9999)
             for enemy in self.enemies:
