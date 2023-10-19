@@ -27,17 +27,16 @@ class Agent:
         self.timeout: int = 0
 
     def get_key(self, state: dict[str, object]):
-        self.state = state
-        if "digdug" in self.state:
-            self.pos = self.state["digdug"]
-            self.enemies = self.state["enemies"]
-            self.level = self.state["level"]
-            self.lives = self.state["lives"]
-            self.player = self.state["player"]
-            self.rocks = self.state["rocks"]
-            self.score = self.state["score"]
-            self.step = self.state["step"]
-            self.timeout = self.state["timeout"]
+        if "digdug" in state:
+            self.pos = state["digdug"]
+            self.enemies = state["enemies"]
+            self.rocks = state["rocks"]
+            # self.level = state["level"]
+            # self.lives = state["lives"]
+            # self.player = state["player"]
+            # self.score = state["score"]
+            # self.step = state["step"]
+            # self.timeout = state["timeout"]
 
             connections = []
             coordinates = {}
