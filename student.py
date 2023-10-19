@@ -61,6 +61,7 @@ class Agent:
         self.score: int = 0
         self.step: int = 0
         self.timeout: int = 0
+        self.map: list = []
 
     def get_key(self, state: dict[str, object]):
         if "digdug" in state:
@@ -98,15 +99,21 @@ class Agent:
                 return "A"
             else:
                 if chosen_enemy[0] > self.pos[0]:
+                    self.map[self.pos[0] + 1][self.pos[1]] = 0
                     return "d"
                 elif chosen_enemy[0] < self.pos[0]:
+                    self.map[self.pos[0] - 1][self.pos[1]] = 0
                     return "a"
                 elif chosen_enemy[1] > self.pos[1]:
+                    self.map[self.pos[0]][self.pos[1] + 1] = 0
                     return "s"
                 elif chosen_enemy[1] < self.pos[1]:
+                    self.map[self.pos[0]][self.pos[1] - 1] = 0
                     return "w"
                 else:
                     return " "
+        else:
+            self.map = state["map"]
         return " "
 
 
