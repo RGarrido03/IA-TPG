@@ -3,6 +3,8 @@ import asyncio
 import getpass
 import json
 import os
+import time
+
 import websockets
 import pprint
 import math
@@ -79,10 +81,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         # Receive information about static game properties
         await websocket.send(json.dumps({"cmd": "join", "name": agent_name}))
 
+        starttime = time.monotonic()
         while True:
             try:
                 # Receive game update.
-                # This must be called timely or your game will get out of sync with the server!
                 state: dict[str, object] = json.loads(
                     await websocket.recv()
                 )
@@ -93,7 +95,10 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 key: str = agent.get_key(state)
                 await websocket.send(
                     json.dumps({"cmd": "key", "key": key})
-                )  # send key command to server - you must implement this send in the AI agent
+                )
+
+                # 10Hz time sync
+                time.sleep(0.1 - ((time.monotonic() - starttime) % 0.1))
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
                 return
