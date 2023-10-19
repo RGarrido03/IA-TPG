@@ -5,36 +5,70 @@ import json
 import os
 import websockets
 import pprint
-
 import math
+
+from cidades import Cidades
+from tree_search import *
 
 
 class Agent:
     def __init__(self):
-        self.pos = None
-        self.state: dict[str, object] | None = None
+        self.state: dict = {}
+        self.pos: list[int] = []
+        self.enemies: list = []
+        self.level: int = 1
+        self.lives: int = 3
+        self.player: str = ""
+        self.rocks: list = []
+        self.score: int = 0
+        self.step: int = 0
+        self.timeout: int = 0
 
     def get_key(self, state: dict[str, object]):
         self.state = state
         if "digdug" in self.state:
             self.pos = self.state["digdug"]
-            for enemy in self.state["enemies"]:
-                dist = math.hypot(enemy["pos"][0] - self.pos[0], enemy["pos"][1] - self.pos[1])
+            self.enemies = self.state["enemies"]
+            self.level = self.state["level"]
+            self.lives = self.state["lives"]
+            self.player = self.state["player"]
+            self.rocks = self.state["rocks"]
+            self.score = self.state["score"]
+            self.step = self.state["step"]
+            self.timeout = self.state["timeout"]
 
-                if dist <= 3:
-                    return "A"
+            connections = []
+            coordinates = {}
+            for enemy in self.enemies:
+                connections.append(("digdug", enemy["id"], math.hypot(enemy["pos"][0] - self.pos[0], enemy["pos"][1] - self.pos[1])))
+                coordinates[enemy["id"]] = tuple(enemy["pos"])
+            coordinates["digdug"] = self.pos
+
+            map_points = Cidades(connections, coordinates)
+
+            chosen_enemy = (0, 0, 9999)
+            for enemy in self.enemies:
+                p = SearchProblem(map_points, 'digdug', enemy["id"])
+                t = SearchTree(p, 'a*')
+                t.search()
+                if t.cost < chosen_enemy[2]:
+                    chosen_enemy = (enemy["pos"][0], enemy["pos"][1], t.cost)
+
+            dist = math.hypot(chosen_enemy[0] - self.pos[0], chosen_enemy[1] - self.pos[1])
+
+            if dist <= 3:
+                return "A"
+            else:
+                if chosen_enemy[0] > self.pos[0]:
+                    return "d"
+                elif chosen_enemy[0] < self.pos[0]:
+                    return "a"
+                elif chosen_enemy[1] > self.pos[1]:
+                    return "s"
+                elif chosen_enemy[1] < self.pos[1]:
+                    return "w"
                 else:
-                    # persegue o inimigo
-                    if enemy["pos"][0] > self.pos[0]:
-                        return "d"
-                    elif enemy["pos"][0] < self.pos[0]:
-                        return "a"
-                    elif enemy["pos"][1] > self.pos[1]:
-                        return "s"
-                    elif enemy["pos"][1] < self.pos[1]:
-                        return "w"
-                    else:
-                        return " "
+                    return " "
         return " "
 
 
