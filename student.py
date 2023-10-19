@@ -95,25 +95,30 @@ class Agent:
 
             dist = math.hypot(chosen_enemy[0] - self.pos[0], chosen_enemy[1] - self.pos[1])
 
-            if dist <= 3:
-                return "A"
+            if chosen_enemy[0] > self.pos[0]:
+                if dist <= 3 and self.map[self.pos[0] + 1][self.pos[1]] == 0:
+                    return "A"
+                self.map[self.pos[0] + 1][self.pos[1]] = 0
+                return "d"
+            elif chosen_enemy[0] < self.pos[0]:
+                if dist <= 3 and self.map[self.pos[0] - 1][self.pos[1]] == 0:
+                    return "A"
+                self.map[self.pos[0] - 1][self.pos[1]] = 0
+                return "a"
+            elif chosen_enemy[1] > self.pos[1]:
+                if dist <= 3 and self.map[self.pos[0]][self.pos[1] + 1] == 0:
+                    return "A"
+                self.map[self.pos[0]][self.pos[1] + 1] = 0
+                return "s"
+            elif chosen_enemy[1] < self.pos[1]:
+                if dist <= 3 and self.map[self.pos[0]][self.pos[1] - 1] == 0:
+                    return "A"
+                self.map[self.pos[0]][self.pos[1] - 1] = 0
+                return "w"
             else:
-                if chosen_enemy[0] > self.pos[0]:
-                    self.map[self.pos[0] + 1][self.pos[1]] = 0
-                    return "d"
-                elif chosen_enemy[0] < self.pos[0]:
-                    self.map[self.pos[0] - 1][self.pos[1]] = 0
-                    return "a"
-                elif chosen_enemy[1] > self.pos[1]:
-                    self.map[self.pos[0]][self.pos[1] + 1] = 0
-                    return "s"
-                elif chosen_enemy[1] < self.pos[1]:
-                    self.map[self.pos[0]][self.pos[1] - 1] = 0
-                    return "w"
-                else:
-                    return " "
-        else:
-            self.map = state["map"]
+                return " "
+
+        self.map = state["map"]
         return " "
 
 
@@ -133,7 +138,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 )
 
                 # Print state for debug
-                pprint.pprint(state)
+                # pprint.pprint(state)
 
                 key: str = agent.get_key(state)
                 await websocket.send(
