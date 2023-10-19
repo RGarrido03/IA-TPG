@@ -9,7 +9,7 @@ import websockets
 import pprint
 import math
 
-from cidades import Cidades
+import mapa
 from tree_search import *
 
 
