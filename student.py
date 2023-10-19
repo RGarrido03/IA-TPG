@@ -11,6 +11,7 @@ import math
 
 import mapa
 from tree_search import *
+from consts import *
 
 
 class PointsGraph(SearchDomain):
@@ -53,6 +54,7 @@ class Agent:
     def __init__(self):
         self.state: dict = {}
         self.pos: list[int] = []
+        self.last_pos: list[int] = []
         self.enemies: list = []
         self.level: int = 1
         self.lives: int = 3
@@ -63,8 +65,28 @@ class Agent:
         self.timeout: int = 0
         self.map: list = []
 
+    def get_digdug_direction(self):
+        # When the game/level starts, it usually goes to East
+        if not self.last_pos:
+            return Direction.EAST
+
+        # Vertical direction
+        if self.pos[0] == self.last_pos[0]:
+            if self.pos[1] < self.last_pos[1]:
+                return Direction.NORTH
+            else:
+                return Direction.SOUTH
+
+        # Horizontal direction
+        else:
+            if self.pos[0] < self.last_pos[0]:
+                return Direction.EAST
+            else:
+                return Direction.WEST
+
     def get_key(self, state: dict[str, object]):
         if "digdug" in state:
+            self.last_pos = self.pos
             self.pos = state["digdug"]
             self.enemies = state["enemies"]
             self.rocks = state["rocks"]
@@ -85,7 +107,7 @@ class Agent:
 
             map_points = PointsGraph(connections, coordinates)
 
-            chosen_enemy = (0, 0, 9999)
+            chosen_enemy = (0, 0, float('inf'))
             for enemy in self.enemies:
                 p = SearchProblem(map_points, 'digdug', enemy["id"])
                 t = SearchTree(p, 'a*')
