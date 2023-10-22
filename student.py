@@ -84,6 +84,18 @@ class Agent:
             else:
                 return Direction.WEST
 
+    def is_digdug_in_front_of_enemy(self, enemy: tuple):
+        direction = self.get_digdug_direction()
+        if direction == Direction.EAST and self.pos[1] == enemy[1] and self.pos[0] < enemy[0]:
+            return True
+        if direction == Direction.WEST and self.pos[1] == enemy[1] and self.pos[0] > enemy[0]:
+            return True
+        if direction == Direction.NORTH and self.pos[0] == enemy[0] and self.pos[1] > enemy[1]:
+            return True
+        if direction == Direction.SOUTH and self.pos[0] == enemy[0] and self.pos[1] < enemy[1]:
+            return True
+        return False
+
     def is_map_digged_to_direction(self, direction: Direction):
         if direction == Direction.EAST and self.map[self.pos[0] + 1][self.pos[1]] == 0:
             return True
