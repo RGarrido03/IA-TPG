@@ -109,11 +109,12 @@ class Agent:
 
             chosen_enemy = (0, 0, float('inf'))
             for enemy in self.enemies:
-                p = SearchProblem(map_points, 'digdug', enemy["id"])
-                t = SearchTree(p, 'a*')
-                t.search()
-                if t.cost < chosen_enemy[2]:
-                    chosen_enemy = (enemy["pos"][0], enemy["pos"][1], t.cost)
+                if "traverse" not in enemy or len(self.enemies) == 1:
+                    p = SearchProblem(map_points, 'digdug', enemy["id"])
+                    t = SearchTree(p, 'a*')
+                    t.search()
+                    if t.cost < chosen_enemy[2]:
+                        chosen_enemy = (enemy["pos"][0], enemy["pos"][1], t.cost)
 
             dist = math.hypot(chosen_enemy[0] - self.pos[0], chosen_enemy[1] - self.pos[1])
             x_dist = chosen_enemy[0] - self.pos[0]
