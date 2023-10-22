@@ -84,6 +84,27 @@ class Agent:
             else:
                 return Direction.WEST
 
+    def is_map_digged_to_direction(self, direction: Direction):
+        if direction == Direction.EAST and self.map[self.pos[0] + 1][self.pos[1]] == 0:
+            return True
+        if direction == Direction.WEST and self.map[self.pos[0] - 1][self.pos[1]] == 0:
+            return True
+        if direction == Direction.NORTH and self.map[self.pos[0]][self.pos[1] - 1] == 0:
+            return True
+        if direction == Direction.SOUTH and self.map[self.pos[0]][self.pos[1] + 1] == 0:
+            return True
+        return False
+
+    def dig_map(self, direction: Direction):
+        if direction == Direction.EAST:
+            self.map[self.pos[0] + 1][self.pos[1]] = 0
+        if direction == Direction.WEST:
+            self.map[self.pos[0] - 1][self.pos[1]] = 0
+        if direction == Direction.SOUTH:
+            self.map[self.pos[0]][self.pos[1] + 1] = 0
+        if direction == Direction.NORTH:
+            self.map[self.pos[0]][self.pos[1] - 1] = 0
+
     def get_key(self, state: dict[str, object]):
         if "digdug" in state:
             self.last_pos = self.pos
@@ -122,25 +143,25 @@ class Agent:
 
             if abs(x_dist) >= abs(y_dist):
                 if x_dist > 0:
-                    if dist <= 3 and self.map[self.pos[0] + 1][self.pos[1]] == 0:
+                    if dist <= 3 and self.is_map_digged_to_direction(Direction.EAST):
                         return "A"
-                    self.map[self.pos[0] + 1][self.pos[1]] = 0
+                    self.dig_map(Direction.EAST)
                     return "d"
                 elif x_dist < 0:
-                    if dist <= 3 and self.map[self.pos[0] - 1][self.pos[1]] == 0:
+                    if dist <= 3 and self.is_map_digged_to_direction(Direction.WEST):
                         return "A"
-                    self.map[self.pos[0] - 1][self.pos[1]] = 0
+                    self.dig_map(Direction.WEST)
                     return "a"
             else:
                 if y_dist > 0:
-                    if dist <= 3 and self.map[self.pos[0]][self.pos[1] + 1] == 0:
+                    if dist <= 3 and self.is_map_digged_to_direction(Direction.SOUTH):
                         return "A"
-                    self.map[self.pos[0]][self.pos[1] + 1] = 0
+                    self.dig_map(Direction.SOUTH)
                     return "s"
                 elif y_dist < 0:
-                    if dist <= 3 and self.map[self.pos[0]][self.pos[1] - 1] == 0:
+                    if dist <= 3 and self.is_map_digged_to_direction(Direction.NORTH):
                         return "A"
-                    self.map[self.pos[0]][self.pos[1] - 1] = 0
+                    self.dig_map(Direction.NORTH)
                     return "w"
         else:
             self.map = state["map"]
