@@ -9,7 +9,6 @@ import websockets
 import pprint
 import math
 
-import mapa
 from tree_search import *
 from consts import *
 
@@ -19,21 +18,21 @@ class PointsGraph(SearchDomain):
         self.connections = connections
         self.coordinates = coordinates
 
-    def actions(self, point):
+    def actions(self, point) -> list:
         actlist = []
         for (P1, P2, C) in self.connections:
-            if (P1 == point):
+            if P1 == point:
                 actlist += [(P1, P2)]
-            elif (P2 == point):
+            elif P2 == point:
                 actlist += [(P2, P1)]
         return actlist
 
-    def result(self, point, action):
+    def result(self, point, action) -> str:
         (P1, P2) = action
         if P1 == point:
             return P2
 
-    def cost(self, point, action):
+    def cost(self, point, action) -> int | None:
         (A1, A2) = action
 
         if A1 != point:
@@ -43,10 +42,10 @@ class PointsGraph(SearchDomain):
             if (P1, P2) in [(A1, A2), (A2, A1)]:
                 return C
 
-    def heuristic(self, point, goal_point):
+    def heuristic(self, point, goal_point) -> float:
         return math.dist(self.coordinates[point], self.coordinates[goal_point])
 
-    def satisfies(self, point, goal_point):
+    def satisfies(self, point, goal_point) -> bool:
         return goal_point == point
 
 
@@ -65,7 +64,7 @@ class Agent:
         self.timeout: int = 0
         self.map: list = []
 
-    def get_digdug_direction(self):
+    def get_digdug_direction(self) -> Direction:
         # When the game/level starts, it usually goes to East
         if not self.last_pos:
             return Direction.EAST
@@ -84,7 +83,7 @@ class Agent:
             else:
                 return Direction.WEST
 
-    def is_digdug_in_front_of_enemy(self, enemy: tuple):
+    def is_digdug_in_front_of_enemy(self, enemy: tuple[int, int]) -> bool:
         direction = self.get_digdug_direction()
         if direction == Direction.EAST and self.pos[1] == enemy[1] and self.pos[0] < enemy[0]:
             return True
@@ -96,7 +95,7 @@ class Agent:
             return True
         return False
 
-    def is_map_digged_to_direction(self, direction: Direction):
+    def is_map_digged_to_direction(self, direction: Direction) -> bool:
         if direction == Direction.EAST and self.map[self.pos[0] + 1][self.pos[1]] == 0:
             return True
         if direction == Direction.WEST and self.map[self.pos[0] - 1][self.pos[1]] == 0:
@@ -107,7 +106,7 @@ class Agent:
             return True
         return False
 
-    def dig_map(self, direction: Direction):
+    def dig_map(self, direction: Direction) -> None:
         if direction == Direction.EAST:
             self.map[self.pos[0] + 1][self.pos[1]] = 0
         if direction == Direction.WEST:
@@ -117,7 +116,7 @@ class Agent:
         if direction == Direction.NORTH:
             self.map[self.pos[0]][self.pos[1] - 1] = 0
 
-    def get_key(self, state: dict[str, object]):
+    def get_key(self, state: dict) -> str:
         if "digdug" in state:
             self.last_pos = self.pos
             self.pos = state["digdug"]
@@ -155,7 +154,7 @@ class Agent:
 
             if abs(x_dist) >= abs(y_dist):
                 if x_dist > 0:
-                    if dist <= 3 and self.is_map_digged_to_direction(Direction.EAST):
+                    if dist <= 3 and self.is_map_digged_to_direction(Direction.EAST) and dist != 2:
                         return "A"
                     self.dig_map(Direction.EAST)
                     return "d"
@@ -192,7 +191,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         while True:
             try:
                 # Receive game update.
-                state: dict[str, object] = json.loads(
+                state: dict = json.loads(
                     await websocket.recv()
                 )
 
