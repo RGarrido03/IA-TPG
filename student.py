@@ -83,7 +83,7 @@ class Agent:
             else:
                 return Direction.WEST
 
-    def is_digdug_in_front_of_enemy(self, enemy: tuple[int, int]) -> bool:
+    def is_digdug_in_front_of_enemy(self, enemy: tuple[int, int, float]) -> bool:
         direction = self.get_digdug_direction()
         if direction == Direction.EAST and self.pos[1] == enemy[1] and self.pos[0] < enemy[0]:
             return True
@@ -116,6 +116,28 @@ class Agent:
         if direction == Direction.NORTH:
             self.map[self.pos[0]][self.pos[1] - 1] = 0
 
+    def get_lower_cost_enemy(self) -> dict:
+        connections = []
+        coordinates = {}
+        for enemy in self.enemies:
+            connections.append(
+                ("digdug", enemy["id"], math.hypot(enemy["pos"][0] - self.pos[0], enemy["pos"][1] - self.pos[1])))
+            coordinates[enemy["id"]] = tuple(enemy["pos"])
+        coordinates["digdug"] = self.pos
+
+        map_points = PointsGraph(connections, coordinates)
+
+        chosen_enemy = {"pos": [0, 0], "cost": float("inf")}
+        for enemy in self.enemies:
+            if "traverse" not in enemy or len(self.enemies) == 1:
+                p = SearchProblem(map_points, 'digdug', enemy["id"])
+                t = SearchTree(p, 'a*')
+                t.search()
+                if t.cost < chosen_enemy["cost"]:
+                    chosen_enemy = enemy
+                    chosen_enemy["cost"] = t.cost
+        return chosen_enemy
+
     def get_key(self, state: dict) -> str:
         if "digdug" in state:
             self.last_pos = self.pos
@@ -129,28 +151,11 @@ class Agent:
             # self.step = state["step"]
             # self.timeout = state["timeout"]
 
-            connections = []
-            coordinates = {}
-            for enemy in self.enemies:
-                connections.append(
-                    ("digdug", enemy["id"], math.hypot(enemy["pos"][0] - self.pos[0], enemy["pos"][1] - self.pos[1])))
-                coordinates[enemy["id"]] = tuple(enemy["pos"])
-            coordinates["digdug"] = self.pos
+            chosen_enemy = self.get_lower_cost_enemy()
 
-            map_points = PointsGraph(connections, coordinates)
-
-            chosen_enemy = (0, 0, float('inf'))
-            for enemy in self.enemies:
-                if "traverse" not in enemy or len(self.enemies) == 1:
-                    p = SearchProblem(map_points, 'digdug', enemy["id"])
-                    t = SearchTree(p, 'a*')
-                    t.search()
-                    if t.cost < chosen_enemy[2]:
-                        chosen_enemy = (enemy["pos"][0], enemy["pos"][1], t.cost)
-
-            dist = math.hypot(chosen_enemy[0] - self.pos[0], chosen_enemy[1] - self.pos[1])
-            x_dist = chosen_enemy[0] - self.pos[0]
-            y_dist = chosen_enemy[1] - self.pos[1]
+            dist = math.hypot(chosen_enemy["pos"][0] - self.pos[0], chosen_enemy["pos"][1] - self.pos[1])
+            x_dist = chosen_enemy["pos"][0] - self.pos[0]
+            y_dist = chosen_enemy["pos"][1] - self.pos[1]
 
             if abs(x_dist) >= abs(y_dist):
                 if x_dist > 0:
