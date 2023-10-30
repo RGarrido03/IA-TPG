@@ -167,6 +167,16 @@ class Agent:
                     return self.dig_map(chosen_enemy["dir"] - 2)
                 return self.dig_map(chosen_enemy["dir"] + 2)
 
+            if "dir" in chosen_enemy and self.get_digdug_direction() == chosen_enemy["dir"]:
+                if chosen_enemy["pos"][0] - self.pos[0] == 1:
+                    return self.dig_map(Direction.EAST)
+                elif chosen_enemy["pos"][0] - self.pos[0] == -1:
+                    return self.dig_map(Direction.WEST)
+                elif chosen_enemy["pos"][1] - self.pos[1] == 1:
+                    return self.dig_map(Direction.SOUTH)
+                elif chosen_enemy["pos"][1] - self.pos[1] == -1:
+                    return self.dig_map(Direction.NORTH)
+
             if abs(x_dist) >= abs(y_dist):
                 if x_dist > 0:
                     if dist <= 3 and self.is_map_digged_to_direction(Direction.EAST) and dist != 2:
