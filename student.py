@@ -9,6 +9,7 @@ import websockets
 import pprint
 import math
 
+import game
 from tree_search import *
 from consts import *
 
@@ -209,7 +210,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 )
 
                 # 10Hz time sync
-                time.sleep(0.1 - ((time.monotonic() - starttime) % 0.1))
+                time.sleep((1/game.GAME_SPEED) - ((time.monotonic() - starttime) % (1/game.GAME_SPEED)))
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
                 return

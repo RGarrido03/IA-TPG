@@ -11,7 +11,7 @@ logger = logging.getLogger("Game")
 logger.setLevel(logging.INFO)
 
 INITIAL_SCORE = 0
-GAME_SPEED = 10
+GAME_SPEED = 30
 MAP_SIZE = (48, 24)
 
 def level_enemies(level):
