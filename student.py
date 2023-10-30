@@ -84,15 +84,15 @@ class Agent:
             else:
                 return Direction.WEST
 
-    def is_digdug_in_front_of_enemy(self, enemy: tuple[int, int, float]) -> bool:
+    def is_digdug_in_front_of_enemy(self, enemy: dict) -> bool:
         direction = self.get_digdug_direction()
-        if direction == Direction.EAST and self.pos[1] == enemy[1] and self.pos[0] < enemy[0]:
+        if direction == Direction.EAST and self.pos[1] == enemy["pos"][1] and self.pos[0] < enemy["pos"][0]:
             return True
-        if direction == Direction.WEST and self.pos[1] == enemy[1] and self.pos[0] > enemy[0]:
+        if direction == Direction.WEST and self.pos[1] == enemy["pos"][1] and self.pos[0] > enemy["pos"][0]:
             return True
-        if direction == Direction.NORTH and self.pos[0] == enemy[0] and self.pos[1] > enemy[1]:
+        if direction == Direction.NORTH and self.pos[0] == enemy["pos"][0] and self.pos[1] > enemy["pos"][1]:
             return True
-        if direction == Direction.SOUTH and self.pos[0] == enemy[0] and self.pos[1] < enemy[1]:
+        if direction == Direction.SOUTH and self.pos[0] == enemy["pos"][0] and self.pos[1] < enemy["pos"][1]:
             return True
         return False
 
@@ -107,15 +107,19 @@ class Agent:
             return True
         return False
 
-    def dig_map(self, direction: Direction) -> None:
+    def dig_map(self, direction: Direction) -> str:
         if direction == Direction.EAST:
             self.map[self.pos[0] + 1][self.pos[1]] = 0
+            return "d"
         if direction == Direction.WEST:
             self.map[self.pos[0] - 1][self.pos[1]] = 0
+            return "a"
         if direction == Direction.SOUTH:
             self.map[self.pos[0]][self.pos[1] + 1] = 0
+            return "s"
         if direction == Direction.NORTH:
             self.map[self.pos[0]][self.pos[1] - 1] = 0
+            return "w"
 
     def get_lower_cost_enemy(self) -> dict:
         connections = []
@@ -158,28 +162,29 @@ class Agent:
             x_dist = chosen_enemy["pos"][0] - self.pos[0]
             y_dist = chosen_enemy["pos"][1] - self.pos[1]
 
+            if "fire" in chosen_enemy and dist <= 3 and self.is_digdug_in_front_of_enemy(chosen_enemy):
+                if chosen_enemy["dir"] > 1:
+                    return self.dig_map(chosen_enemy["dir"] - 2)
+                return self.dig_map(chosen_enemy["dir"] + 2)
+
             if abs(x_dist) >= abs(y_dist):
                 if x_dist > 0:
                     if dist <= 3 and self.is_map_digged_to_direction(Direction.EAST) and dist != 2:
                         return "A"
-                    self.dig_map(Direction.EAST)
-                    return "d"
+                    return self.dig_map(Direction.EAST)
                 elif x_dist < 0:
                     if dist <= 3 and self.is_map_digged_to_direction(Direction.WEST):
                         return "A"
-                    self.dig_map(Direction.WEST)
-                    return "a"
+                    return self.dig_map(Direction.WEST)
             else:
                 if y_dist > 0:
                     if dist <= 3 and self.is_map_digged_to_direction(Direction.SOUTH):
                         return "A"
-                    self.dig_map(Direction.SOUTH)
-                    return "s"
+                    return self.dig_map(Direction.SOUTH)
                 elif y_dist < 0:
                     if dist <= 3 and self.is_map_digged_to_direction(Direction.NORTH):
                         return "A"
-                    self.dig_map(Direction.NORTH)
-                    return "w"
+                    return self.dig_map(Direction.NORTH)
         else:
             self.map = state["map"]
 
