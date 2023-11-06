@@ -162,11 +162,13 @@ class Agent:
             x_dist = chosen_enemy["pos"][0] - self.pos[0]
             y_dist = chosen_enemy["pos"][1] - self.pos[1]
 
+            # Run away from enemy if it's spilling fire
             if "fire" in chosen_enemy and dist <= 3 and self.is_digdug_in_front_of_enemy(chosen_enemy):
                 if chosen_enemy["dir"] > 1:
                     return self.dig_map(chosen_enemy["dir"] - 2)
                 return self.dig_map(chosen_enemy["dir"] + 2)
 
+            # Change the direction when it bugs and just follows the enemy
             if "dir" in chosen_enemy and self.get_digdug_direction() == chosen_enemy["dir"]:
                 if chosen_enemy["pos"][0] - self.pos[0] == 1:
                     return self.dig_map(Direction.EAST)
