@@ -80,9 +80,9 @@ class Agent:
         # Horizontal direction
         else:
             if self.pos[0] < self.last_pos[0]:
-                return Direction.EAST
-            else:
                 return Direction.WEST
+            else:
+                return Direction.EAST
 
     def is_digdug_in_front_of_enemy(self, enemy: dict) -> bool:
         direction = self.get_digdug_direction()
