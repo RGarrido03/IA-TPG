@@ -178,9 +178,9 @@ class Agent:
                     return self.dig_map(Direction.SOUTH)
                 elif chosen_enemy["pos"][1] - self.pos[1] == -1:
                     return self.dig_map(Direction.NORTH)
-            
+
             # Run away if enemy is too close
-            if dist <2 :
+            if dist < 2:
                 print("Run away")
                 if chosen_enemy["dir"] == Direction.WEST and chosen_enemy["pos"][0] - 1 == self.pos[0] + 1 and chosen_enemy["pos"][1] == self.pos[1]:
                     return self.dig_map(Direction.WEST)
@@ -190,7 +190,7 @@ class Agent:
                     return self.dig_map(Direction.NORTH)
                 elif chosen_enemy["dir"] == Direction.SOUTH and chosen_enemy["pos"][0] == self.pos[0] and chosen_enemy["pos"][1] + 1 == self.pos[1] - 1:
                     return self.dig_map(Direction.SOUTH)
-                
+
                 if chosen_enemy["dir"] == Direction.WEST and self.pos[0] + 1 == chosen_enemy["pos"][0] and self.pos[1] == chosen_enemy["pos"][1]:
                     return self.dig_map(Direction.WEST)
                 elif chosen_enemy["dir"] == Direction.EAST and self.pos[0] - 1 == chosen_enemy["pos"][0] and self.pos[1] == chosen_enemy["pos"][1]:
@@ -199,7 +199,7 @@ class Agent:
                     return self.dig_map(Direction.NORTH)
                 elif chosen_enemy["dir"] == Direction.SOUTH and  self.pos[0] == chosen_enemy["pos"][0] and self.pos[1] - 1 == chosen_enemy["pos"][1]:
                     return self.dig_map(Direction.SOUTH)
-                
+
                 if chosen_enemy["dir"] == Direction.WEST and self.pos[0] + 1 == chosen_enemy["pos"][0] and self.pos[1] + 1 == chosen_enemy["pos"][1]:
                     return self.dig_map(Direction.WEST)
                 elif chosen_enemy["dir"] == Direction.EAST and self.pos[0] - 1 == chosen_enemy["pos"][0] and self.pos[1] - 1 == chosen_enemy["pos"][1]:
@@ -208,18 +208,15 @@ class Agent:
                     return self.dig_map(Direction.NORTH)
                 elif  chosen_enemy["dir"] == Direction.SOUTH and self.pos[0] + 1 == chosen_enemy["pos"][0] and self.pos[1] - 1 == chosen_enemy["pos"][1]:
                     return self.dig_map(Direction.SOUTH)
-                
+
                 if chosen_enemy["dir"] == Direction.WEST and self.pos[0] + 1 == chosen_enemy["pos"][0] and self.pos[1] - 1 == chosen_enemy["pos"][1]:
                     return self.dig_map(Direction.WEST)
                 elif chosen_enemy["dir"] == Direction.EAST and self.pos[0] - 1 == chosen_enemy["pos"][0] and self.pos[1] + 1 == chosen_enemy["pos"][1]:
                     return self.dig_map(Direction.EAST)
                 elif chosen_enemy["dir"] == Direction.NORTH and self.pos[0] + 1 == chosen_enemy["pos"][0] and self.pos[1] + 1 == chosen_enemy["pos"][1]:
                     return self.dig_map(Direction.NORTH)
-                elif  chosen_enemy["dir"] == Direction.SOUTH and self.pos[0] - 1 == chosen_enemy["pos"][0] and self.pos[1] - 1 == chosen_enemy["pos"][1]:
+                elif chosen_enemy["dir"] == Direction.SOUTH and self.pos[0] - 1 == chosen_enemy["pos"][0] and self.pos[1] - 1 == chosen_enemy["pos"][1]:
                     return self.dig_map(Direction.SOUTH)
-                
-
-
 
             if abs(x_dist) >= abs(y_dist):
                 if x_dist > 0:
@@ -243,7 +240,6 @@ class Agent:
             self.map = state["map"]
 
         print("Nothing to do")
-
         return " "
 
 
@@ -271,7 +267,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 )
 
                 # 10Hz time sync
-                time.sleep((1/game.GAME_SPEED) - ((time.monotonic() - starttime) % (1/game.GAME_SPEED)))
+                time.sleep((1 / game.GAME_SPEED) - ((time.monotonic() - starttime) % (1 / game.GAME_SPEED)))
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
                 return
