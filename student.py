@@ -102,6 +102,14 @@ class Agent:
             return True
         return False
 
+    def are_digdug_and_enemy_facing_each_other(self, enemy: dict) -> bool:
+        digdug_direction: Direction = self.dir
+        enemy_direction: Direction = enemy["dir"]
+
+        if enemy_direction > 1:
+            return digdug_direction == enemy_direction - 2
+        return digdug_direction == enemy_direction + 2
+
     def is_map_digged_to_direction(self, direction: Direction) -> bool:
         if direction == Direction.EAST and self.map[self.pos[0] + 1][self.pos[1]] == 0:
             return True
@@ -164,10 +172,8 @@ class Agent:
             y_dist = chosen_enemy["pos"][1] - self.pos[1]
 
             # Run away from the enemy if it's spilling fire
-            if "fire" in chosen_enemy and dist <= 3 and self.is_digdug_in_front_of_enemy(chosen_enemy):
-                if chosen_enemy["dir"] > 1:
-                    return self.dig_map(chosen_enemy["dir"] - 2)
-                return self.dig_map(chosen_enemy["dir"] + 2)
+            if "fire" in chosen_enemy and dist <= 3 and self.are_digdug_and_enemy_facing_each_other(chosen_enemy):
+                return self.dig_map(chosen_enemy["dir"])
 
             # Change the direction when it bugs and just follows the enemy
             if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
