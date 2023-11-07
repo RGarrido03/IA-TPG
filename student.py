@@ -179,6 +179,10 @@ class Agent:
                 elif chosen_enemy["pos"][1] - self.pos[1] == -1:
                     return self.dig_map(Direction.NORTH)
 
+            # Try to fire
+            if dist <= 3 and self.is_digdug_in_front_of_enemy(chosen_enemy):
+                return "A"
+
             # Run away if enemy is too close
             if dist < 2:
                 print("Run away")
@@ -220,21 +224,13 @@ class Agent:
 
             if abs(x_dist) >= abs(y_dist):
                 if x_dist > 0:
-                    if dist <= 3 and self.is_map_digged_to_direction(Direction.EAST):
-                        return "A"
                     return self.dig_map(Direction.EAST)
                 elif x_dist < 0:
-                    if dist <= 3 and self.is_map_digged_to_direction(Direction.WEST):
-                        return "A"
                     return self.dig_map(Direction.WEST)
             else:
                 if y_dist > 0:
-                    if dist <= 3 and self.is_map_digged_to_direction(Direction.SOUTH):
-                        return "A"
                     return self.dig_map(Direction.SOUTH)
                 elif y_dist < 0:
-                    if dist <= 3 and self.is_map_digged_to_direction(Direction.NORTH):
-                        return "A"
                     return self.dig_map(Direction.NORTH)
         else:
             self.map = state["map"]
