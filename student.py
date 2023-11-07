@@ -6,7 +6,6 @@ import os
 import time
 
 import websockets
-import pprint
 import math
 
 import game
@@ -183,7 +182,7 @@ class Agent:
             if dist <= 3 and self.is_digdug_in_front_of_enemy(chosen_enemy):
                 return "A"
 
-            # Run away if enemy is too close
+            # Run away if the enemy is too close
             if dist < 2:
                 print("Run away")
                 if chosen_enemy["dir"] == Direction.WEST and chosen_enemy["pos"][0] - 1 == self.pos[0] + 1 and chosen_enemy["pos"][1] == self.pos[1]:
@@ -222,6 +221,7 @@ class Agent:
                 elif chosen_enemy["dir"] == Direction.SOUTH and self.pos[0] - 1 == chosen_enemy["pos"][0] and self.pos[1] - 1 == chosen_enemy["pos"][1]:
                     return self.dig_map(Direction.SOUTH)
 
+            # Move around the map
             if abs(x_dist) >= abs(y_dist):
                 if x_dist > 0:
                     return self.dig_map(Direction.EAST)
@@ -235,7 +235,6 @@ class Agent:
         else:
             self.map = state["map"]
 
-        print("Nothing to do")
         return " "
 
 
@@ -253,9 +252,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 state: dict = json.loads(
                     await websocket.recv()
                 )
-
-                # Print state for debug
-                # pprint.pprint(state)
 
                 key: str = agent.get_key(state)
                 await websocket.send(
