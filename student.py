@@ -43,8 +43,9 @@ class PointsGraph(SearchDomain):
                 return C
 
     def heuristic(self, point, goal_point) -> float:
-        return math.dist(self.coordinates[point], self.coordinates[goal_point])
-
+        x1, y1 = self.coordinates[point]
+        x2, y2 = self.coordinates[goal_point]
+        return (x2-x1)**2 + (y2-y1)**2
     def satisfies(self, point, goal_point) -> bool:
         return goal_point == point
 
@@ -177,13 +178,9 @@ class Agent:
                     return self.dig_map(Direction.SOUTH)
                 elif chosen_enemy["pos"][1] - self.pos[1] == -1:
                     return self.dig_map(Direction.NORTH)
-
-            # Try to fire
-            if dist <= 3 and self.is_digdug_in_front_of_enemy(chosen_enemy):
-                return "A"
-
-            # Run away if the enemy is too close
-            if dist < 2:
+            
+            # Run away if enemy is too close
+            if dist <2 :
                 print("Run away")
                 if chosen_enemy["dir"] == Direction.WEST and chosen_enemy["pos"][0] - 1 == self.pos[0] + 1 and chosen_enemy["pos"][1] == self.pos[1]:
                     return self.dig_map(Direction.WEST)
@@ -224,16 +221,26 @@ class Agent:
             # Move around the map
             if abs(x_dist) >= abs(y_dist):
                 if x_dist > 0:
+                    if dist <= 3 and self.is_map_digged_to_direction(Direction.EAST):
+                        return "A"
                     return self.dig_map(Direction.EAST)
                 elif x_dist < 0:
+                    if dist <= 3 and self.is_map_digged_to_direction(Direction.WEST):
+                        return "A"
                     return self.dig_map(Direction.WEST)
             else:
                 if y_dist > 0:
+                    if dist <= 3 and self.is_map_digged_to_direction(Direction.SOUTH):
+                        return "A"
                     return self.dig_map(Direction.SOUTH)
                 elif y_dist < 0:
+                    if dist <= 3 and self.is_map_digged_to_direction(Direction.NORTH):
+                        return "A"
                     return self.dig_map(Direction.NORTH)
         else:
             self.map = state["map"]
+
+        print("Nothing to do")
 
         return " "
 
