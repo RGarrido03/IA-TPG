@@ -45,7 +45,8 @@ class PointsGraph(SearchDomain):
     def heuristic(self, point, goal_point) -> float:
         x1, y1 = self.coordinates[point]
         x2, y2 = self.coordinates[goal_point]
-        return (x2-x1)**2 + (y2-y1)**2
+        return (x2 - x1) ** 2 + (y2 - y1) ** 2
+
     def satisfies(self, point, goal_point) -> bool:
         return goal_point == point
 
@@ -55,6 +56,7 @@ class Agent:
         self.state: dict = {}
         self.pos: list[int] = []
         self.last_pos: list[int] = []
+        self.dir: Direction = Direction.EAST
         self.enemies: list = []
         self.level: int = 1
         self.lives: int = 3
@@ -66,26 +68,30 @@ class Agent:
         self.map: list = []
 
     def get_digdug_direction(self) -> Direction:
-        # When the game/level starts, it usually goes to East
+        # When the game/level starts, it has no last position
         if not self.last_pos:
-            return Direction.EAST
+            return self.dir
 
         # Vertical direction
         if self.pos[0] == self.last_pos[0]:
             if self.pos[1] < self.last_pos[1]:
                 return Direction.NORTH
-            else:
+            elif self.pos[1] > self.last_pos[1]:
                 return Direction.SOUTH
+            else:
+                return self.dir
 
         # Horizontal direction
         else:
             if self.pos[0] < self.last_pos[0]:
                 return Direction.WEST
-            else:
+            elif self.pos[0] > self.last_pos[0]:
                 return Direction.EAST
+            else:
+                return self.dir
 
     def is_digdug_in_front_of_enemy(self, enemy: dict) -> bool:
-        direction = self.get_digdug_direction()
+        direction = self.dir
         if direction == Direction.EAST and self.pos[1] == enemy["pos"][1] and self.pos[0] < enemy["pos"][0]:
             return True
         if direction == Direction.WEST and self.pos[1] == enemy["pos"][1] and self.pos[0] > enemy["pos"][0]:
@@ -147,14 +153,9 @@ class Agent:
         if "digdug" in state:
             self.last_pos = self.pos
             self.pos = state["digdug"]
+            self.dir = self.get_digdug_direction()
             self.enemies = state["enemies"]
             self.rocks = state["rocks"]
-            # self.level = state["level"]
-            # self.lives = state["lives"]
-            # self.player = state["player"]
-            # self.score = state["score"]
-            # self.step = state["step"]
-            # self.timeout = state["timeout"]
 
             chosen_enemy = self.get_lower_cost_enemy()
 
@@ -162,14 +163,14 @@ class Agent:
             x_dist = chosen_enemy["pos"][0] - self.pos[0]
             y_dist = chosen_enemy["pos"][1] - self.pos[1]
 
-            # Run away from enemy if it's spilling fire
+            # Run away from the enemy if it's spilling fire
             if "fire" in chosen_enemy and dist <= 3 and self.is_digdug_in_front_of_enemy(chosen_enemy):
                 if chosen_enemy["dir"] > 1:
                     return self.dig_map(chosen_enemy["dir"] - 2)
                 return self.dig_map(chosen_enemy["dir"] + 2)
 
             # Change the direction when it bugs and just follows the enemy
-            if "dir" in chosen_enemy and self.get_digdug_direction() == chosen_enemy["dir"]:
+            if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
                 if chosen_enemy["pos"][0] - self.pos[0] == 1:
                     return self.dig_map(Direction.EAST)
                 elif chosen_enemy["pos"][0] - self.pos[0] == -1:
@@ -178,9 +179,9 @@ class Agent:
                     return self.dig_map(Direction.SOUTH)
                 elif chosen_enemy["pos"][1] - self.pos[1] == -1:
                     return self.dig_map(Direction.NORTH)
-            
-            # Run away if enemy is too close
-            if dist <2 :
+
+            # Run away if the enemy is too close
+            if dist < 2:
                 print("Run away")
                 if chosen_enemy["dir"] == Direction.WEST and chosen_enemy["pos"][0] - 1 == self.pos[0] + 1 and chosen_enemy["pos"][1] == self.pos[1]:
                     return self.dig_map(Direction.WEST)
