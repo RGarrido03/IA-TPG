@@ -221,92 +221,48 @@ class Agent:
             if abs(x_dist) >= abs(y_dist):
                 if x_dist > 0:
                     if dist <= 3:
-                        if self.is_digdug_in_front_of_enemy(chosen_enemy)  and self.is_map_digged_to_direction(Direction.EAST):
+                        if self.is_digdug_in_front_of_enemy(chosen_enemy) and self.is_map_digged_to_direction(Direction.EAST):
                             print("1 - A")
                             return "A"
                         if self.pos[0] + 1 == chosen_enemy["pos"][0] and self.pos[1] == chosen_enemy["pos"][1]:
-                            print("1 - B")
-                            if self.pos[1] > 0:
-                                return self.dig_map(Direction.NORTH)
-                            else:
-                                return self.dig_map(Direction.SOUTH)
+                            return self.dig_map(Direction.NORTH) if self.pos[1] > 0 else self.dig_map(Direction.SOUTH)
                         elif self.pos[0] + 1 == chosen_enemy["pos"][0] and self.pos[1] + 1 == chosen_enemy["pos"][1]:
-                            print("1 - C")
-                            if self.pos[1] > 0:
-                                return self.dig_map(Direction.NORTH)
-                            else:
-                                return self.dig_map(Direction.SOUTH)
+                            return self.dig_map(Direction.NORTH) if self.pos[1] > 0 else self.dig_map(Direction.SOUTH)
                         elif self.pos[0] + 1 == chosen_enemy["pos"][0] and self.pos[1] - 1 == chosen_enemy["pos"][1]:
-                            print("1 - D")
-                            if self.pos[1] > 0:
-                                return self.dig_map(Direction.NORTH)
-                            else:
-                                return self.dig_map(Direction.SOUTH)
+                            return self.dig_map(Direction.NORTH) if self.pos[1] > 0 else self.dig_map(Direction.SOUTH)
                         elif self.pos[0] + 1 == chosen_enemy["pos"][0] - 1 and self.pos[1] == chosen_enemy["pos"][1]:
-                            print("1 - E")
-                            if self.pos[1] > 0:
-                                return self.dig_map(Direction.NORTH)
-                            else:
-                                return self.dig_map(Direction.SOUTH)
+                            return self.dig_map(Direction.NORTH) if self.pos[1] > 0 else self.dig_map(Direction.SOUTH)
                     print("EAST")
                     return self.dig_map(Direction.EAST)
                 elif x_dist < 0:
-                    if dist <= 3 :
+                    if dist <= 3:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) and self.is_map_digged_to_direction(Direction.WEST):
                             print("2 - A")
                             return "A"
                         if self.pos[0] - 1 == chosen_enemy["pos"][0] and self.pos[1] == chosen_enemy["pos"][1]:
-                            print("2 - B")
-                            if self.pos[1] < self.map_size[1] - 1:
-                                return self.dig_map(Direction.SOUTH)
-                            else:
-                                return self.dig_map(Direction.NORTH)
+                            return self.dig_map(Direction.SOUTH) if self.pos[1] < self.map_size[1] - 1 else self.dig_map(Direction.NORTH)
                         elif self.pos[0] - 1 == chosen_enemy["pos"][0] and self.pos[1] + 1 == chosen_enemy["pos"][1]:
-                            print("2 - C")
-                            if self.pos[1] < self.map_size[1] - 1:
-                                return self.dig_map(Direction.SOUTH)
-                            else:
-                                return self.dig_map(Direction.NORTH)
+                            return self.dig_map(Direction.SOUTH) if self.pos[1] < self.map_size[1] - 1 else self.dig_map(Direction.NORTH)
                         elif self.pos[0] - 1 == chosen_enemy["pos"][0] and self.pos[1] - 1 == chosen_enemy["pos"][1]:
-                            print("2 - D")
-                            if self.pos[1] < self.map_size[1] - 1:
-                                return self.dig_map(Direction.SOUTH)
-                            else:
-                                return self.dig_map(Direction.NORTH)
+                            return self.dig_map(Direction.SOUTH) if self.pos[1] < self.map_size[1] - 1 else self.dig_map(Direction.NORTH)
                         elif self.pos[0] - 1 == chosen_enemy["pos"][0] + 1 and self.pos[1] == chosen_enemy["pos"][1]:
-                            print("2 - E")
-                            if self.pos[1] < self.map_size[1] - 1:
-                                return self.dig_map(Direction.SOUTH)
-                            else:
-                                return self.dig_map(Direction.NORTH)
+                            return self.dig_map(Direction.SOUTH) if self.pos[1] < self.map_size[1] - 1 else self.dig_map(Direction.NORTH)
                     print("WEST")
                     return self.dig_map(Direction.WEST)
             else:
                 if y_dist > 0:
-                    if dist <= 3 :
+                    if dist <= 3:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) and self.is_map_digged_to_direction(Direction.SOUTH):
                             print("3 - A")
                             return "A"
                         if self.pos[0] == chosen_enemy["pos"][0] and self.pos[1] + 1 == chosen_enemy["pos"][1]:
-                            print("3 - B")
-                            if self.pos[0] < self.map_size[0] - 1:
-                                return self.dig_map(Direction.EAST)
-                            return self.dig_map(Direction.WEST)
+                            return self.dig_map(Direction.EAST) if self.pos[0] < self.map_size[0] - 1 else self.dig_map(Direction.WEST)
                         elif self.pos[0] == chosen_enemy["pos"][0] + 1 and self.pos[1] + 1 == chosen_enemy["pos"][1]:
-                            print("3 - C")
-                            if self.pos[0] < self.map_size[0] - 1:
-                                return self.dig_map(Direction.EAST)
-                            return self.dig_map(Direction.WEST)
+                            return self.dig_map(Direction.EAST) if self.pos[0] < self.map_size[0] - 1 else self.dig_map(Direction.WEST)
                         elif self.pos[0] == chosen_enemy["pos"][0] -1 and self.pos[1] + 1 == chosen_enemy["pos"][1]:
-                            print("3 - D")
-                            if self.pos[0] < self.map_size[0] - 1:
-                                return self.dig_map(Direction.EAST)
-                            return self.dig_map(Direction.WEST)
+                            return self.dig_map(Direction.EAST) if self.pos[0] < self.map_size[0] - 1 else self.dig_map(Direction.WEST)
                         elif self.pos[0] == chosen_enemy["pos"][0] and self.pos[1] + 1 == chosen_enemy["pos"][1] - 1:
-                            print("3 - E")
-                            if self.pos[0] < self.map_size[0] - 1:
-                                return self.dig_map(Direction.EAST)
-                            return self.dig_map(Direction.WEST)
+                            return self.dig_map(Direction.EAST) if self.pos[0] < self.map_size[0] - 1 else self.dig_map(Direction.WEST)
                     print("SOUTH")
                     return self.dig_map(Direction.SOUTH)
                 elif y_dist < 0:
@@ -315,36 +271,21 @@ class Agent:
                             print("4 - A")
                             return "A"
                         if self.pos[0] == chosen_enemy["pos"][0] and self.pos[1] - 1 == chosen_enemy["pos"][1]:
-                            print("4 - B")
-                            if self.pos[0] > 0:
-                                return self.dig_map(Direction.WEST)
-                            return self.dig_map(Direction.EAST)
+                            return self.dig_map(Direction.WEST) if self.pos[0] > 0 else self.dig_map(Direction.EAST)
                         elif self.pos[0] == chosen_enemy["pos"][0] + 1 and self.pos[1] - 1 == chosen_enemy["pos"][1]:
-                            print("4 - C")
-                            if self.pos[0] > 0:
-                                return self.dig_map(Direction.WEST)
-                            return self.dig_map(Direction.EAST)
+                            return self.dig_map(Direction.WEST) if self.pos[0] > 0 else self.dig_map(Direction.EAST)
                         elif self.pos[0] == chosen_enemy["pos"][0] - 1 and self.pos[1] - 1 == chosen_enemy["pos"][1]:
-                            print("4 - D")
-                            if self.pos[0] > 0:
-                                return self.dig_map(Direction.WEST)
-                            return self.dig_map(Direction.EAST)
+                            return self.dig_map(Direction.WEST) if self.pos[0] > 0 else self.dig_map(Direction.EAST)
                         elif self.pos[0] == chosen_enemy["pos"][0] and self.pos[1] - 1 == chosen_enemy["pos"][1] + 1:
-                            print("4 - E")
-                            if self.pos[0] > 0:
-                                return self.dig_map(Direction.WEST)
-                            return self.dig_map(Direction.EAST)
+                            return self.dig_map(Direction.WEST) if self.pos[0] > 0 else self.dig_map(Direction.EAST)
                     print("NORTH")
                     return self.dig_map(Direction.NORTH)
-
 
         else:
             self.map = state["map"]
             self.map_size = state["size"]
 
-
         print("Nothing to do")
-
         return " "
 
 
