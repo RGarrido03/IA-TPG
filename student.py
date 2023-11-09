@@ -61,12 +61,13 @@ class Agent:
         self.level: int = 1
         self.lives: int = 3
         self.player: str = ""
-        self.rocks: list = []
+        self.pos_rocks: list = []
         self.score: int = 0
         self.step: int = 0
         self.timeout: int = 0
         self.map: list = []
         self.map_size: list = []
+        self.pos_rocks: list = []
 
     def get_digdug_direction(self) -> Direction:
         # When the game/level starts, it has no last position
@@ -175,30 +176,60 @@ class Agent:
             y_dist: int = chosen_enemy["pos"][1] - self.pos[1]
             dist: int = x_dist + y_dist
 
+            if 'rocks' in state:
+                for r in state['rocks']:
+                    if r['pos'] not in self.pos_rocks:
+                        self.pos_rocks.append(r['pos'])
+                
+
             # Run away from the enemy if it's spilling fire
             if "fire" in chosen_enemy and dist <= 3 and self.are_digdug_and_enemy_facing_each_other(chosen_enemy):
                 return self.dig_map(chosen_enemy["dir"])
 
             # Change the direction when it bugs and just follows the enemy
             if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
-                if x_dist == 1:
+                if x_dist == 1 and ([self.pos[0] + 1, self.pos[1]] or [self.pos[0], self.pos[1] - 1] or [self.pos[0], self.pos[1] + 1]) not in self.pos_rocks:
+                    print("EAST")
                     if (x_dist == 1 and y_dist in (-1, 0, 1)) or (x_dist == 2 and y_dist == 0):
-                        return self.dig_map(Direction.NORTH) if self.pos[1] > 0 else self.dig_map(Direction.SOUTH)
+                        if self.pos[1] > 0 and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks:
+                            return self.dig_map(Direction.NORTH)
+                        elif ([self.pos[0], self.pos[1] + 1]) not in self.pos_rocks: 
+                            return self.dig_map(Direction.SOUTH)
+                        else:
+                            return self.dig_map(Direction.WEST)
                     return self.dig_map(Direction.EAST)
 
-                elif x_dist == -1:
+                elif x_dist == -1 and ([self.pos[0] - 1, self.pos[1]] or [self.pos[0], self.pos[1] - 1] or [self.pos[0], self.pos[1] + 1]) not in self.pos_rocks:
+                    print("WEST")
                     if (x_dist == -1 and y_dist in (-1, 0, 1)) or (x_dist == -2 and y_dist == 0):
-                        return self.dig_map(Direction.SOUTH) if self.pos[1] < self.map_size[1] - 1 else self.dig_map(Direction.NORTH)
+                        if self.pos[1] < self.map_size[1] - 1 and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks:
+                            return self.dig_map(Direction.SOUTH)
+                        elif ([self.pos[0], self.pos[1] - 1]) not in self.pos_rocks:
+                            return self.dig_map(Direction.NORTH)
+                        else:
+                            return self.dig_map(Direction.EAST)
                     return self.dig_map(Direction.WEST)
 
                 elif y_dist == 1:
-                    if (y_dist == 1 and x_dist in (-1, 0, 1)) or (y_dist == 2 and x_dist == 0):
-                        return self.dig_map(Direction.EAST) if self.pos[0] < self.map_size[0] - 1 else self.dig_map(Direction.WEST)
+                    print("SOUTH")
+                    if (y_dist == 1 and x_dist in (-1, 0, 1)) or (y_dist == 2 and x_dist == 0) and ([self.pos[0] - 1, self.pos[1]] or [self.pos[0] + 1, self.pos[1]] or [self.pos[0], self.pos[1] + 1]) not in self.pos_rocks:
+                        if self.pos[0] < self.map_size[0] - 1 and [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks:
+                            return self.dig_map(Direction.EAST)
+                        elif ([self.pos[0] - 1, self.pos[1]]) not in self.pos_rocks:
+                            return self.dig_map(Direction.WEST)
+                        else:
+                            self.dig_map(Direction.NORTH)
                     return self.dig_map(Direction.SOUTH)
 
                 elif y_dist == -1:
-                    if (y_dist == -1 and x_dist in (-1, 0, 1)) or (y_dist == -2 and x_dist == 0):
-                        return self.dig_map(Direction.WEST) if self.pos[0] > 0 else self.dig_map(Direction.EAST)
+                    print("NORTH")
+                    if (y_dist == -1 and x_dist in (-1, 0, 1)) or (y_dist == -2 and x_dist == 0) and ([self.pos[0] - 1, self.pos[1]] or [self.pos[0] + 1, self.pos[1]] or [self.pos[0], self.pos[1] - 1]) not in self.pos_rocks:
+                        if self.pos[0] > 0 and self.pos[0] - 1 not in self.pos_rocks:
+                            return self.dig_map(Direction.WEST)
+                        elif ([self.pos[0] + 1, self.pos[1]]) not in self.pos_rocks:
+                            return self.dig_map(Direction.EAST)
+                        else:
+                            return self.dig_map(Direction.SOUTH)
                     return self.dig_map(Direction.NORTH)
 
             # Move around the map
@@ -209,18 +240,42 @@ class Agent:
                             print("1 - A")
                             return "A"
                         if (x_dist == 1 and y_dist in (-1, 0, 1)) or (x_dist == 2 and y_dist == 0):
-                            return self.dig_map(Direction.NORTH) if self.pos[1] > 0 else self.dig_map(Direction.SOUTH)
+                            if self.pos[1] > 0 and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks:
+                                return self.dig_map(Direction.NORTH)
+                            elif ([self.pos[0], self.pos[1] + 1]) not in self.pos_rocks: 
+                                return self.dig_map(Direction.SOUTH)
+                            else:
+                                return self.dig_map(Direction.WEST)
                     print("EAST")
-                    return self.dig_map(Direction.EAST)
-                elif x_dist < 0:
+                    if [self.pos[0]+1, self.pos[1]] not in self.pos_rocks:
+                        return self.dig_map(Direction.EAST)
+                    elif [self.pos[0], self.pos[1] + 1] not in self.pos_rocks:
+                        return self.dig_map(Direction.SOUTH)
+                    elif [self.pos[0], self.pos[1] - 1] not in self.pos_rocks:
+                        return self.dig_map(Direction.NORTH)
+                    else:
+                        return self.dig_map(Direction.WEST)
+                elif x_dist < 0 :
                     if dist <= 3:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) and self.is_map_digged_to_direction(Direction.WEST):
                             print("2 - A")
                             return "A"
                         if (x_dist == -1 and y_dist in (-1, 0, 1)) or (x_dist == -2 and y_dist == 0):
-                            return self.dig_map(Direction.SOUTH) if self.pos[1] < self.map_size[1] - 1 else self.dig_map(Direction.NORTH)
+                            if self.pos[1] < self.map_size[1] - 1 and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks:
+                                return self.dig_map(Direction.SOUTH)
+                            elif ([self.pos[0], self.pos[1] - 1]) not in self.pos_rocks:
+                                return self.dig_map(Direction.NORTH)
+                            else:
+                                return self.dig_map(Direction.EAST)
                     print("WEST")
-                    return self.dig_map(Direction.WEST)
+                    if [self.pos[0]-1, self.pos[1]] not in self.pos_rocks:
+                        return self.dig_map(Direction.WEST)
+                    elif [self.pos[0], self.pos[1] + 1] not in self.pos_rocks:
+                        return self.dig_map(Direction.SOUTH)
+                    elif [self.pos[0], self.pos[1] - 1] not in self.pos_rocks:
+                        return self.dig_map(Direction.NORTH)
+                    else:
+                        return self.dig_map(Direction.EAST)
             else:
                 if y_dist > 0:
                     if dist <= 3:
@@ -228,19 +283,42 @@ class Agent:
                             print("3 - A")
                             return "A"
                         if (y_dist == 1 and x_dist in (-1, 0, 1)) or (y_dist == 2 and x_dist == 0):
-                            return self.dig_map(Direction.EAST) if self.pos[0] < self.map_size[0] - 1 else self.dig_map(Direction.WEST)
+                            if self.pos[0] < self.map_size[0] - 1 and [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks:
+                                return self.dig_map(Direction.EAST)
+                            elif ([self.pos[0] - 1, self.pos[1]]) not in self.pos_rocks:
+                                return self.dig_map(Direction.WEST)
+                            else:
+                                self.dig_map(Direction.NORTH)
                     print("SOUTH")
-                    return self.dig_map(Direction.SOUTH)
+                    if [self.pos[0], self.pos[1]+1] not in self.pos_rocks:
+                        return self.dig_map(Direction.SOUTH)
+                    elif [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks:
+                        return self.dig_map(Direction.EAST)
+                    elif [self.pos[0] - 1, self.pos[1]] not in self.pos_rocks:
+                        return self.dig_map(Direction.WEST)
+                    else:
+                        return self.dig_map(Direction.NORTH)
                 elif y_dist < 0:
                     if dist <= 3:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy)  and self.is_map_digged_to_direction(Direction.NORTH):
                             print("4 - A")
                             return "A"
                         if (y_dist == -1 and x_dist in (-1, 0, 1)) or (y_dist == -2 and x_dist == 0):
-                            return self.dig_map(Direction.WEST) if self.pos[0] > 0 else self.dig_map(Direction.EAST)
+                            if self.pos[0] > 0 and self.pos[0] - 1 not in self.pos_rocks:
+                                return self.dig_map(Direction.WEST)
+                            elif ([self.pos[0] + 1, self.pos[1]]) not in self.pos_rocks:
+                                return self.dig_map(Direction.EAST)
+                            else:
+                                return self.dig_map(Direction.SOUTH)
                     print("NORTH")
-                    return self.dig_map(Direction.NORTH)
-
+                    if [self.pos[0], self.pos[1]-1] not in self.pos_rocks:
+                        return self.dig_map(Direction.NORTH)
+                    elif [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks:
+                        return self.dig_map(Direction.EAST)
+                    elif [self.pos[0] - 1, self.pos[1]] not in self.pos_rocks:
+                        return self.dig_map(Direction.WEST)
+                    else:
+                        return self.dig_map(Direction.SOUTH)
         else:
             self.map = state["map"]
             self.map_size = state["size"]
@@ -263,6 +341,8 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 state: dict = json.loads(
                     await websocket.recv()
                 )
+
+                print("Received game update: ", state)
 
                 key: str = agent.get_key(state)
                 await websocket.send(
