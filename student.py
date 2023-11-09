@@ -171,9 +171,9 @@ class Agent:
             print("pos enemy: ", chosen_enemy["pos"])
             print("pos digdug: ", self.pos)
 
-            x_dist = chosen_enemy["pos"][0] - self.pos[0]
-            y_dist = chosen_enemy["pos"][1] - self.pos[1]
-            dist = x_dist + y_dist
+            x_dist: int = chosen_enemy["pos"][0] - self.pos[0]
+            y_dist: int = chosen_enemy["pos"][1] - self.pos[1]
+            dist: int = x_dist + y_dist
 
             # Run away from the enemy if it's spilling fire
             if "fire" in chosen_enemy and dist <= 3 and self.are_digdug_and_enemy_facing_each_other(chosen_enemy):
@@ -182,38 +182,22 @@ class Agent:
             # Change the direction when it bugs and just follows the enemy
             if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
                 if x_dist == 1:
-                    if (self.pos[0] + 1 == chosen_enemy["pos"][0] and
-                            (self.pos[1] == chosen_enemy["pos"][1] or
-                             self.pos[1] + 1 == chosen_enemy["pos"][1] or
-                             self.pos[1] - 1 == chosen_enemy["pos"][1])) or \
-                            (self.pos[0] + 1 == chosen_enemy["pos"][0] - 1 and self.pos[1] == chosen_enemy["pos"][1]):
+                    if (x_dist == 1 and y_dist in (-1, 0, 1)) or (x_dist == 2 and y_dist == 0):
                         return self.dig_map(Direction.NORTH) if self.pos[1] > 0 else self.dig_map(Direction.SOUTH)
                     return self.dig_map(Direction.EAST)
 
                 elif x_dist == -1:
-                    if (self.pos[0] - 1 == chosen_enemy["pos"][0] and
-                            (self.pos[1] == chosen_enemy["pos"][1] or
-                             self.pos[1] + 1 == chosen_enemy["pos"][1] or
-                             self.pos[1] - 1 == chosen_enemy["pos"][1])) or \
-                            (self.pos[0] - 1 == chosen_enemy["pos"][0] + 1 and self.pos[1] == chosen_enemy["pos"][1]):
+                    if (x_dist == -1 and y_dist in (-1, 0, 1)) or (x_dist == -2 and y_dist == 0):
                         return self.dig_map(Direction.SOUTH) if self.pos[1] < self.map_size[1] - 1 else self.dig_map(Direction.NORTH)
                     return self.dig_map(Direction.WEST)
 
                 elif y_dist == 1:
-                    if (self.pos[1] + 1 == chosen_enemy["pos"][1] and
-                            (self.pos[0] == chosen_enemy["pos"][0] or
-                             self.pos[0] + 1 == chosen_enemy["pos"][0] or
-                             self.pos[0] - 1 == chosen_enemy["pos"][0])) or \
-                            (self.pos[1] + 1 == chosen_enemy["pos"][1] - 1 and self.pos[0] == chosen_enemy["pos"][0]):
+                    if (y_dist == 1 and x_dist in (-1, 0, 1)) or (y_dist == 2 and x_dist == 0):
                         return self.dig_map(Direction.EAST) if self.pos[0] < self.map_size[0] - 1 else self.dig_map(Direction.WEST)
                     return self.dig_map(Direction.SOUTH)
 
                 elif y_dist == -1:
-                    if (self.pos[1] - 1 == chosen_enemy["pos"][1] and
-                            (self.pos[0] == chosen_enemy["pos"][0] or
-                             self.pos[0] + 1 == chosen_enemy["pos"][0] or
-                             self.pos[0] - 1 == chosen_enemy["pos"][0])) or \
-                            (self.pos[1] - 1 == chosen_enemy["pos"][1] + 1 and self.pos[0] == chosen_enemy["pos"][0]):
+                    if (y_dist == -1 and x_dist in (-1, 0, 1)) or (y_dist == -2 and x_dist == 0):
                         return self.dig_map(Direction.WEST) if self.pos[0] > 0 else self.dig_map(Direction.EAST)
                     return self.dig_map(Direction.NORTH)
 
@@ -224,11 +208,7 @@ class Agent:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) and self.is_map_digged_to_direction(Direction.EAST):
                             print("1 - A")
                             return "A"
-                        if (self.pos[0] + 1 == chosen_enemy["pos"][0] and
-                            (self.pos[1] == chosen_enemy["pos"][1] or
-                             self.pos[1] + 1 == chosen_enemy["pos"][1] or
-                             self.pos[1] - 1 == chosen_enemy["pos"][1])) or \
-                                (self.pos[0] + 1 == chosen_enemy["pos"][0] - 1 and self.pos[1] == chosen_enemy["pos"][1]):
+                        if (x_dist == 1 and y_dist in (-1, 0, 1)) or (x_dist == 2 and y_dist == 0):
                             return self.dig_map(Direction.NORTH) if self.pos[1] > 0 else self.dig_map(Direction.SOUTH)
                     print("EAST")
                     return self.dig_map(Direction.EAST)
@@ -237,11 +217,7 @@ class Agent:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) and self.is_map_digged_to_direction(Direction.WEST):
                             print("2 - A")
                             return "A"
-                        if (self.pos[0] - 1 == chosen_enemy["pos"][0] and
-                            (self.pos[1] == chosen_enemy["pos"][1] or
-                             self.pos[1] + 1 == chosen_enemy["pos"][1] or
-                             self.pos[1] - 1 == chosen_enemy["pos"][1])) or \
-                                (self.pos[0] - 1 == chosen_enemy["pos"][0] + 1 and self.pos[1] == chosen_enemy["pos"][1]):
+                        if (x_dist == -1 and y_dist in (-1, 0, 1)) or (x_dist == -2 and y_dist == 0):
                             return self.dig_map(Direction.SOUTH) if self.pos[1] < self.map_size[1] - 1 else self.dig_map(Direction.NORTH)
                     print("WEST")
                     return self.dig_map(Direction.WEST)
@@ -251,11 +227,7 @@ class Agent:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) and self.is_map_digged_to_direction(Direction.SOUTH):
                             print("3 - A")
                             return "A"
-                        if (self.pos[1] + 1 == chosen_enemy["pos"][1] and
-                            (self.pos[0] == chosen_enemy["pos"][0] or
-                             self.pos[0] + 1 == chosen_enemy["pos"][0] or
-                             self.pos[0] - 1 == chosen_enemy["pos"][0])) or \
-                                (self.pos[1] + 1 == chosen_enemy["pos"][1] - 1 and self.pos[0] == chosen_enemy["pos"][0]):
+                        if (y_dist == 1 and x_dist in (-1, 0, 1)) or (y_dist == 2 and x_dist == 0):
                             return self.dig_map(Direction.EAST) if self.pos[0] < self.map_size[0] - 1 else self.dig_map(Direction.WEST)
                     print("SOUTH")
                     return self.dig_map(Direction.SOUTH)
@@ -264,11 +236,7 @@ class Agent:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy)  and self.is_map_digged_to_direction(Direction.NORTH):
                             print("4 - A")
                             return "A"
-                        if (self.pos[1] - 1 == chosen_enemy["pos"][1] and
-                            (self.pos[0] == chosen_enemy["pos"][0] or
-                             self.pos[0] + 1 == chosen_enemy["pos"][0] or
-                             self.pos[0] - 1 == chosen_enemy["pos"][0])) or \
-                                (self.pos[1] - 1 == chosen_enemy["pos"][1] + 1 and self.pos[0] == chosen_enemy["pos"][0]):
+                        if (y_dist == -1 and x_dist in (-1, 0, 1)) or (y_dist == -2 and x_dist == 0):
                             return self.dig_map(Direction.WEST) if self.pos[0] > 0 else self.dig_map(Direction.EAST)
                     print("NORTH")
                     return self.dig_map(Direction.NORTH)
@@ -295,7 +263,6 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 state: dict = json.loads(
                     await websocket.recv()
                 )
-
 
                 key: str = agent.get_key(state)
                 await websocket.send(
