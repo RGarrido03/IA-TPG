@@ -61,7 +61,6 @@ class Agent:
         self.level: int = 1
         self.lives: int = 3
         self.player: str = ""
-        self.pos_rocks: list = []
         self.score: int = 0
         self.step: int = 0
         self.timeout: int = 0
@@ -165,7 +164,8 @@ class Agent:
             self.pos = state["digdug"]
             self.dir = self.get_digdug_direction()
             self.enemies = state["enemies"]
-            self.rocks = state["rocks"]
+            if 'rocks' in state:
+                self.pos_rocks = [rock["pos"] for rock in state["rocks"]]
 
             chosen_enemy = self.get_lower_cost_enemy()
 
@@ -175,16 +175,6 @@ class Agent:
             x_dist: int = chosen_enemy["pos"][0] - self.pos[0]
             y_dist: int = chosen_enemy["pos"][1] - self.pos[1]
             dist: int = x_dist + y_dist
-
-            if 'rocks' in state:
-                for r in state['rocks']:
-                    if r['pos'] not in self.pos_rocks:
-                        self.pos_rocks.append(r['pos'])
-                
-
-            # Run away from the enemy if it's spilling fire
-            if "fire" in chosen_enemy and dist <= 3 and self.are_digdug_and_enemy_facing_each_other(chosen_enemy):
-                return self.dig_map(chosen_enemy["dir"])
 
             # Change the direction when it bugs and just follows the enemy
             if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
@@ -255,7 +245,7 @@ class Agent:
                         return self.dig_map(Direction.NORTH)
                     else:
                         return self.dig_map(Direction.WEST)
-                elif x_dist < 0 :
+                elif x_dist < 0:
                     if dist <= 3:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) and self.is_map_digged_to_direction(Direction.WEST):
                             print("2 - A")
