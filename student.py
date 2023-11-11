@@ -182,44 +182,44 @@ class Agent:
                 if x_dist == 1 and ([self.pos[0] + 1, self.pos[1]] or [self.pos[0], self.pos[1] - 1] or [self.pos[0], self.pos[1] + 1]) not in self.pos_rocks:
                     print("EAST")
                     if y_dist in (0, -1, 1):
-                        if self.pos[1] > 0 and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks and y_dist != -1:
+                        if self.pos[1] - 1 >= 0 and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks and y_dist != -1:
                             return self.dig_map(Direction.NORTH)
-                        elif ([self.pos[0], self.pos[1] + 1]) not in self.pos_rocks and y_dist != 1: 
+                        elif ([self.pos[0], self.pos[1] + 1]) not in self.pos_rocks and y_dist != 1 and self.pos[1] + 1 <= self.map_size[1] - 1: 
                             return self.dig_map(Direction.SOUTH)
-                        else:
+                        elif ([self.pos[0] - 1, self.pos[1]]) not in self.pos_rocks and self.pos[0] - 1 >= 0:
                             return self.dig_map(Direction.WEST)
                     return self.dig_map(Direction.EAST)
 
                 elif x_dist == -1 and ([self.pos[0] - 1, self.pos[1]] or [self.pos[0], self.pos[1] - 1] or [self.pos[0], self.pos[1] + 1]) not in self.pos_rocks:
                     print("WEST")
                     if y_dist in (-1, 0, 1):
-                        if self.pos[1] < self.map_size[1] - 1 and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks and y_dist != 1:
+                        if self.pos[1] + 1 <= self.map_size[1] - 1 and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks and y_dist != 1:
                             return self.dig_map(Direction.SOUTH)
-                        elif ([self.pos[0], self.pos[1] - 1]) not in self.pos_rocks and y_dist != -1:
+                        elif ([self.pos[0], self.pos[1] - 1]) not in self.pos_rocks and y_dist != -1 and self.pos[1] - 1 >= 0:
                             return self.dig_map(Direction.NORTH)
-                        else:
+                        elif ([self.pos[0] + 1, self.pos[1]]) not in self.pos_rocks and self.pos[0] + 1 <= self.map_size[0] - 1:
                             return self.dig_map(Direction.EAST)
                     return self.dig_map(Direction.WEST)
 
                 elif y_dist == 1 :
                     print("SOUTH")
                     if x_dist in (-1, 0, 1) and ([self.pos[0] - 1, self.pos[1]] or [self.pos[0] + 1, self.pos[1]] or [self.pos[0], self.pos[1] + 1]) not in self.pos_rocks:
-                        if self.pos[0] < self.map_size[0] - 1 and [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks and x_dist != 1:
+                        if [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks and x_dist != 1:
                             return self.dig_map(Direction.EAST)
                         elif ([self.pos[0] - 1, self.pos[1]]) not in self.pos_rocks and x_dist != -1:
                             return self.dig_map(Direction.WEST)
-                        else:
+                        elif ([self.pos[0], self.pos[1] - 1]) not in self.pos_rocks and self.pos[1] - 1 >= 0:
                             self.dig_map(Direction.NORTH)
                     return self.dig_map(Direction.SOUTH)
 
                 elif y_dist == -1:
                     print("NORTH")
                     if x_dist in (-1, 0, 1) and ([self.pos[0] - 1, self.pos[1]] or [self.pos[0] + 1, self.pos[1]] or [self.pos[0], self.pos[1] - 1]) not in self.pos_rocks:
-                        if self.pos[0] > 0 and self.pos[0] - 1 not in self.pos_rocks and x_dist != -1:
+                        if self.pos[0] - 1 not in self.pos_rocks and x_dist != -1:
                             return self.dig_map(Direction.WEST)
                         elif ([self.pos[0] + 1, self.pos[1]]) not in self.pos_rocks and x_dist != 1:
                             return self.dig_map(Direction.EAST)
-                        else:
+                        elif ([self.pos[0], self.pos[1] + 1]) not in self.pos_rocks and self.pos[1] + 1 <= self.map_size[1] - 1:
                             return self.dig_map(Direction.SOUTH)
                     return self.dig_map(Direction.NORTH)
 
@@ -233,11 +233,11 @@ class Agent:
                             return "A"
                         if ((x_dist != 1 or y_dist not in (-1, 0, 1)) and (x_dist != 2 or y_dist != 0)) and [self.pos[0]+1, self.pos[1]] not in self.pos_rocks:
                             return self.dig_map(Direction.EAST)
-                        elif (x_dist != 1 or y_dist != -1) and self.pos[1] > 0 and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks:
+                        elif (x_dist != 1 or y_dist != -1) and self.pos[1] - 1 >= 0 and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks:
                             return self.dig_map(Direction.NORTH)
-                        elif (x_dist != 1 or y_dist != 1) and self.pos[1] < self.map_size[1] - 1 and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks:
+                        elif (x_dist != 1 or y_dist != 1) and self.pos[1] +1 <= self.map_size[1] - 1 and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks:
                             return self.dig_map(Direction.SOUTH)
-                        else:
+                        elif (x_dist != 1 or y_dist != 0):
                             return self.dig_map(Direction.WEST)
                     print("EAST")
                     if [self.pos[0]+1, self.pos[1]] not in self.pos_rocks:
@@ -246,7 +246,7 @@ class Agent:
                         return self.dig_map(Direction.SOUTH)
                     elif [self.pos[0], self.pos[1] - 1] not in self.pos_rocks:
                         return self.dig_map(Direction.NORTH)
-                    else:
+                    elif self.pos[0] - 1 >= 0:
                         return self.dig_map(Direction.WEST)
                 elif x_dist < 0:
                     if dist <= 3:
@@ -255,11 +255,11 @@ class Agent:
                             return "A"
                         if ((x_dist != -1 or y_dist not in (-1, 0, 1)) and (x_dist != -2 or y_dist != 0)) and [self.pos[0]-1, self.pos[1]] not in self.pos_rocks:
                             return self.dig_map(Direction.WEST)
-                        elif (x_dist != -1 or y_dist != -1) and self.pos[1] > 0 and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks:
+                        elif (x_dist != -1 or y_dist != -1) and self.pos[1] - 1 >= 0 and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks:
                             return self.dig_map(Direction.NORTH)
-                        elif (x_dist != -1 or y_dist != 1) and self.pos[1] < self.map_size[1] - 1 and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks:
+                        elif (x_dist != -1 or y_dist != 1) and self.pos[1] + 1 <= self.map_size[1] - 1 and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks:
                             return self.dig_map(Direction.SOUTH)
-                        else:
+                        elif self.pos[0] + 1 <= self.map_size[0] - 1:
                             return self.dig_map(Direction.EAST)
                     print("WEST")
                     if [self.pos[0]-1, self.pos[1]] not in self.pos_rocks:
@@ -268,7 +268,7 @@ class Agent:
                         return self.dig_map(Direction.SOUTH)
                     elif [self.pos[0], self.pos[1] - 1] not in self.pos_rocks:
                         return self.dig_map(Direction.NORTH)
-                    else:
+                    elif self.pos[0] + 1 <= self.map_size[0] - 1:
                         return self.dig_map(Direction.EAST)
             else:
                 if y_dist > 0:
@@ -278,11 +278,11 @@ class Agent:
                             return "A"
                         if ((y_dist != 1 or x_dist not in (-1, 0, 1)) and (y_dist != 2 or x_dist != 0)) and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks:
                             return self.dig_map(Direction.SOUTH)
-                        elif (y_dist != 1 or x_dist != 1) and self.pos[0] < self.map_size[0] - 1 and [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks:
+                        elif (y_dist != 1 or x_dist != 1) and self.pos[0] + 1 <= self.map_size[0] - 1 and [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks:
                             return self.dig_map(Direction.EAST)
-                        elif (y_dist != 1 or x_dist != -1) and self.pos[0] > 0 and [self.pos[0] - 1, self.pos[1]] not in self.pos_rocks:
+                        elif (y_dist != 1 or x_dist != -1) and self.pos[0] -1 >= 0 and [self.pos[0] - 1, self.pos[1]] not in self.pos_rocks:
                             return self.dig_map(Direction.WEST)
-                        else:
+                        elif self.pos[0] - 1 >= 0:
                             return self.dig_map(Direction.NORTH)
                     print("SOUTH")
                     if [self.pos[0], self.pos[1]+1] not in self.pos_rocks:
@@ -291,7 +291,7 @@ class Agent:
                         return self.dig_map(Direction.EAST)
                     elif [self.pos[0] - 1, self.pos[1]] not in self.pos_rocks:
                         return self.dig_map(Direction.WEST)
-                    else:
+                    elif self.pos[0] - 1 >= 0:
                         return self.dig_map(Direction.NORTH)
                 elif y_dist < 0:
                     if dist <= 3:
@@ -300,11 +300,11 @@ class Agent:
                             return "A"
                         if ((y_dist != -1 or x_dist not in (-1, 0, 1)) and (y_dist != -2 or x_dist != 0)) and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks:
                             return self.dig_map(Direction.NORTH)
-                        elif (y_dist != -1 or x_dist != 1) and self.pos[0] < self.map_size[0] - 1 and [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks:
+                        elif (y_dist != -1 or x_dist != 1) and self.pos[0] + 1 <= self.map_size[0] - 1 and [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks:
                             return self.dig_map(Direction.EAST)
-                        elif (y_dist != -1 or x_dist != -1) and self.pos[0] > 0 and [self.pos[0] - 1, self.pos[1]] not in self.pos_rocks:
+                        elif (y_dist != -1 or x_dist != -1) and self.pos[0] -1 >= 0 and [self.pos[0] - 1, self.pos[1]] not in self.pos_rocks:
                             return self.dig_map(Direction.WEST)
-                        else:
+                        elif self.pos[1] + 1 <= self.map_size[1] - 1:
                             return self.dig_map(Direction.SOUTH)
                     print("NORTH")
                     if [self.pos[0], self.pos[1]-1] not in self.pos_rocks:
@@ -313,7 +313,7 @@ class Agent:
                         return self.dig_map(Direction.EAST)
                     elif [self.pos[0] - 1, self.pos[1]] not in self.pos_rocks:
                         return self.dig_map(Direction.WEST)
-                    else:
+                    elif self.pos[1] + 1 <= self.map_size[1] - 1:
                         return self.dig_map(Direction.SOUTH)
         else:
             self.map = state["map"]
