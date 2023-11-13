@@ -57,7 +57,7 @@ class Agent:
         self.pos: list[int] = []
         self.last_pos: list[int] = []
         self.dir: Direction = Direction.EAST
-        self.enemies: list = []
+        self.enemies: list[dict] = []
         self.level: int = 1
         self.lives: int = 3
         self.player: str = ""
@@ -136,7 +136,7 @@ class Agent:
             self.map[self.pos[0]][self.pos[1] - 1] = 0
             return "w"
 
-    def get_lower_cost_enemy(self) -> dict:
+    def get_lower_cost_enemy(self) -> tuple[dict, list[dict]]:
         connections = []
         coordinates = {}
         for enemy in self.enemies:
@@ -148,15 +148,25 @@ class Agent:
         map_points = PointsGraph(connections, coordinates)
 
         chosen_enemy = {"pos": [0, 0], "cost": float("inf")}
+        other_enemies = []
+
         for enemy in self.enemies:
             if "traverse" not in enemy or len(self.enemies) == 1:
                 p = SearchProblem(map_points, 'digdug', enemy["id"])
                 t = SearchTree(p, 'a*')
                 t.search()
-                if t.cost < chosen_enemy["cost"]:
+
+                enemy["x_dist"]: int = enemy["pos"][0] - self.pos[0]
+                enemy["y_dist"]: int = enemy["pos"][1] - self.pos[1]
+                enemy["dist"]: int = abs(enemy["x_dist"]) + abs(enemy["y_dist"])
+
+                enemy["cost"] = t.cost
+
+                if enemy["cost"] < chosen_enemy["cost"]:
                     chosen_enemy = enemy
-                    chosen_enemy["cost"] = t.cost
-        return chosen_enemy
+                else:
+                    other_enemies.append(enemy)
+        return chosen_enemy, other_enemies
 
     def will_enemy_fire_at_digdug(self, enemy: dict, digdug_new_pos: list[int]) -> bool:
         if "name" not in enemy or enemy["name"] != "Fygar":
@@ -186,21 +196,24 @@ class Agent:
 
     def get_key(self, state: dict) -> str:
         if "digdug" in state:
-            self.last_pos = self.pos
-            self.pos = state["digdug"]
-            self.dir = self.get_digdug_direction()
-            self.enemies = state["enemies"]
+            self.last_pos: list[int] = self.pos
+            self.pos: list[int] = state["digdug"]
+            self.dir: Direction = self.get_digdug_direction()
+            self.enemies: list[dict] = state["enemies"]
             if 'rocks' in state:
-                self.pos_rocks = [rock["pos"] for rock in state["rocks"]]
+                self.pos_rocks: list = [rock["pos"] for rock in state["rocks"]]
 
-            chosen_enemy = self.get_lower_cost_enemy()
+            chosen_enemy, other_enemies = self.get_lower_cost_enemy()
 
             print("pos enemy: ", chosen_enemy["pos"])
             print("pos digdug: ", self.pos)
 
-            x_dist: int = chosen_enemy["pos"][0] - self.pos[0]
-            y_dist: int = chosen_enemy["pos"][1] - self.pos[1]
-            dist: int = abs(x_dist) + abs(y_dist)
+            if not "dist" in chosen_enemy:
+                return " "
+
+            x_dist: int = chosen_enemy["x_dist"]
+            y_dist: int = chosen_enemy["y_dist"]
+            dist: int = chosen_enemy["dist"]
 
             # Change the direction when it bugs and just follows the enemy
             if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
