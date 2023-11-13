@@ -22,6 +22,7 @@ from mapa import VITAL_SPACE
 logger = logging.getLogger("Characters")
 logger.setLevel(logging.INFO)
 
+
 class Character:
     def __init__(self, x=1, y=1):
         self._pos = x, y
@@ -56,6 +57,10 @@ class Character:
     def y(self):
         return self._pos[1]
 
+    @property
+    def __str__(self) -> str:
+        return f"{self.__class__.__name__}({self._pos})"
+
     def respawn(self):
         self.pos = self._spawn_pos
 
@@ -68,6 +73,9 @@ class Rock(Character):
         super().__init__(*pos)
         self.id = uuid.uuid4()
         self._falling = random.randint(3, 9)  # we never known when the rock will fall
+
+    def to_dict(self):
+        return {"id": str(self.id), "pos": self.pos}
 
     def move(self, mapa, digdug, rocks):
         open_pos = mapa.calc_pos(self.pos, Direction.SOUTH, traverse=False)
@@ -108,6 +116,9 @@ class DigDug(Character):
             self.pos = new_pos
             mapa.dig(self.pos)
 
+    def __str__(self):
+        return f"DigDug({self.pos}, lives={self._lives})"
+
 
 class Enemy(Character):
     def __init__(self, pos, name, speed, smart, wallpass, lives=MIN_ENEMY_LIFE):
@@ -125,14 +136,34 @@ class Enemy(Character):
         self.exit = False
         self._points = None
         super().__init__(*pos)
-        logger.info("Enemy %s created at %s with Smart.%s", self._name, self.pos,self._smart.name)
+        logger.info(
+            "Enemy %s created at %s with Smart.%s",
+            self._name,
+            self.pos,
+            self._smart.name,
+        )
+
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "id": str(self.id),
+            "pos": self.pos,
+            "dir": self.lastdir,
+        }
 
     @property
     def traverse(self):
         return self._wallpass
 
+    @property
+    def name(self):
+        return self._name
+
+    def __repr__(self) -> str:
+        return str(self)
+
     def __str__(self):
-        return f"{self._name}"
+        return f"{self._name}({self.pos}, {self._wallpass}, {self._smart})"
 
     def points(self, map_height):
         if self._points:
@@ -290,7 +321,9 @@ class Fygar(Enemy):
             pos = self.pos
             for _ in range(3):
                 pos = mapa.calc_pos(pos, self.dir[self.lastdir], traverse=False)
-                if pos not in self.fire and pos != self.pos:  # Make sure we don't fire on ourselves:
+                if (
+                    pos not in self.fire and pos != self.pos
+                ):  # Make sure we don't fire on ourselves:
                     self.fire.append(pos)
                 else:
                     break

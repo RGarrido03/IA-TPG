@@ -149,19 +149,19 @@ class GameServer:
                         game_info = self.game.info()
                         await self.send_info(game_info)
 
-                    state = await self.game.next_frame()
-                    state["player"] = self.current_player.name
+                    if state:= await self.game.next_frame():
+                        state["player"] = self.current_player.name
 
-                    state = json.dumps(state)
+                        state = json.dumps(state)
 
-                    await self.current_player.ws.send(state)
+                        await self.current_player.ws.send(state)
 
-                    for viewer in self.viewers:
-                        try:
-                            await viewer.send(state)
-                        except Exception:
-                            self.viewers.remove(viewer)
-                            break
+                        for viewer in self.viewers:
+                            try:
+                                await viewer.send(state)
+                            except Exception:
+                                self.viewers.remove(viewer)
+                                break
 
                 self.save_highscores(self.game.score)
 
@@ -178,7 +178,7 @@ class GameServer:
                 try:
                     if self.grading:
                         game_record["score"] = self.game.score
-                        game_record["level"] = self.game.level 
+                        game_record["level"] = self.game.level
                         requests.post(self.grading, json=game_record, timeout=2)
                 except RequestException as err:
                     logger.error(err)
