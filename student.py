@@ -164,22 +164,22 @@ class Agent:
 
         if enemy["dir"] == Direction.NORTH and \
                 digdug_new_pos[0] == enemy["pos"][0] and \
-                digdug_new_pos[1] in (enemy["pos"][1] - 1, enemy["pos"][1] - 2, enemy["pos"][1] - 3):
+                digdug_new_pos[1] in (enemy["pos"][1] - 1, enemy["pos"][1] - 2, enemy["pos"][1] - 3, enemy["pos"][1] - 4):
             return True
 
         if enemy["dir"] == Direction.SOUTH and \
                 digdug_new_pos[0] == enemy["pos"][0] and \
-                digdug_new_pos[1] in (enemy["pos"][1] + 1, enemy["pos"][1] + 2, enemy["pos"][1] + 3):
+                digdug_new_pos[1] in (enemy["pos"][1] + 1, enemy["pos"][1] + 2, enemy["pos"][1] + 3, enemy["pos"][1] + 4):
             return True
 
         if enemy["dir"] == Direction.EAST and \
                 digdug_new_pos[1] == enemy["pos"][1] and \
-                digdug_new_pos[0] in (enemy["pos"][0] + 1, enemy["pos"][0] + 2, enemy["pos"][0] + 3):
+                digdug_new_pos[0] in (enemy["pos"][0] + 1, enemy["pos"][0] + 2, enemy["pos"][0] + 3, enemy["pos"][0] + 4):
             return True
 
         if enemy["dir"] == Direction.WEST and \
                 digdug_new_pos[1] == enemy["pos"][1] and \
-                digdug_new_pos[0] in (enemy["pos"][0] - 1, enemy["pos"][0] - 2, enemy["pos"][0] - 3):
+                digdug_new_pos[0] in (enemy["pos"][0] - 1, enemy["pos"][0] - 2, enemy["pos"][0] - 3, enemy["pos"][0] - 4):
             return True
 
         return False
