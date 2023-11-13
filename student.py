@@ -205,8 +205,9 @@ class Agent:
 
             chosen_enemy, other_enemies = self.get_lower_cost_enemy()
 
+            print("\npos digdug: ", self.pos)
             print("pos enemy: ", chosen_enemy["pos"])
-            print("pos digdug: ", self.pos)
+            print("pos other enemies: ", [enemy["pos"] for enemy in other_enemies])
 
             if not "dist" in chosen_enemy:
                 return " "
@@ -214,6 +215,23 @@ class Agent:
             x_dist: int = chosen_enemy["x_dist"]
             y_dist: int = chosen_enemy["y_dist"]
             dist: int = chosen_enemy["dist"]
+
+            # Run away when there are multiple enemies
+            left = [enemy for enemy in other_enemies if enemy["dist"] <= 3 and enemy["pos"][0] < self.pos[0] and enemy["pos"][1] == self.pos[1]]
+            right = [enemy for enemy in other_enemies if enemy["dist"] <= 3 and enemy["pos"][0] > self.pos[0] and enemy["pos"][1] == self.pos[1]]
+            top = [enemy for enemy in other_enemies if enemy["dist"] <= 3 and enemy["pos"][0] == self.pos[0] and enemy["pos"][1] < self.pos[1]]
+            bottom = [enemy for enemy in other_enemies if enemy["dist"] <= 3 and enemy["pos"][0] == self.pos[0] and enemy["pos"][1] > self.pos[1]]
+
+            if len(left + right + top + bottom) >= 1:
+                print("-> Multiple enemies")
+                sorted_enemies = sorted([(Direction.SOUTH, len(bottom)), (Direction.WEST, len(left)), (Direction.EAST, len(right)), (Direction.NORTH, len(top))], key=lambda x: x[1])
+                for new_dir, length in sorted_enemies:
+                    if ((new_dir == Direction.SOUTH and self.pos[1] + 1 <= self.map_size[1] - 1) or
+                            (new_dir == Direction.WEST and self.pos[0] - 1 >= 0) or
+                            (new_dir == Direction.EAST and self.pos[0] + 1 <= self.map_size[0] - 1) or
+                            (new_dir == Direction.NORTH and self.pos[1] - 1 >= 0)):
+                        print("   " + sorted_enemies[0][0].name)
+                        return self.dig_map(new_dir)
 
             # Change the direction when it bugs and just follows the enemy
             if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
