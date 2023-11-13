@@ -158,6 +158,32 @@ class Agent:
                     chosen_enemy["cost"] = t.cost
         return chosen_enemy
 
+    def will_enemy_fire_at_digdug(self, enemy: dict, digdug_new_pos: list[int]) -> bool:
+        if "name" not in enemy or enemy["name"] != "Fygar":
+            return False
+
+        if enemy["dir"] == Direction.NORTH and \
+                digdug_new_pos[0] == enemy["pos"][0] and \
+                digdug_new_pos[1] in (enemy["pos"][1] - 1, enemy["pos"][1] - 2, enemy["pos"][1] - 3):
+            return True
+
+        if enemy["dir"] == Direction.SOUTH and \
+                digdug_new_pos[0] == enemy["pos"][0] and \
+                digdug_new_pos[1] in (enemy["pos"][1] + 1, enemy["pos"][1] + 2, enemy["pos"][1] + 3):
+            return True
+
+        if enemy["dir"] == Direction.EAST and \
+                digdug_new_pos[1] == enemy["pos"][1] and \
+                digdug_new_pos[0] in (enemy["pos"][0] + 1, enemy["pos"][0] + 2, enemy["pos"][0] + 3):
+            return True
+
+        if enemy["dir"] == Direction.WEST and \
+                digdug_new_pos[1] == enemy["pos"][1] and \
+                digdug_new_pos[0] in (enemy["pos"][0] - 1, enemy["pos"][0] - 2, enemy["pos"][0] - 3):
+            return True
+
+        return False
+
     def get_key(self, state: dict) -> str:
         if "digdug" in state:
             self.last_pos = self.pos
@@ -182,44 +208,44 @@ class Agent:
                 if x_dist == 1 and ([self.pos[0] + 1, self.pos[1]] or [self.pos[0], self.pos[1] - 1] or [self.pos[0], self.pos[1] + 1]) not in self.pos_rocks:
                     print("EAST")
                     if y_dist in (0, -1, 1):
-                        if self.pos[1] - 1 >= 0 and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks and y_dist != -1:
+                        if self.pos[1] - 1 >= 0 and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks and y_dist != -1 and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0], self.pos[1] - 1]):
                             return self.dig_map(Direction.NORTH)
-                        elif ([self.pos[0], self.pos[1] + 1]) not in self.pos_rocks and y_dist != 1 and self.pos[1] + 1 <= self.map_size[1] - 1: 
+                        elif ([self.pos[0], self.pos[1] + 1]) not in self.pos_rocks and y_dist != 1 and self.pos[1] + 1 <= self.map_size[1] - 1 and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0], self.pos[1] + 1]):
                             return self.dig_map(Direction.SOUTH)
-                        elif ([self.pos[0] - 1, self.pos[1]]) not in self.pos_rocks and self.pos[0] - 1 >= 0:
+                        elif ([self.pos[0] - 1, self.pos[1]]) not in self.pos_rocks and self.pos[0] - 1 >= 0 and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0] - 1, self.pos[1]]):
                             return self.dig_map(Direction.WEST)
                     return self.dig_map(Direction.EAST)
 
                 elif x_dist == -1 and ([self.pos[0] - 1, self.pos[1]] or [self.pos[0], self.pos[1] - 1] or [self.pos[0], self.pos[1] + 1]) not in self.pos_rocks:
                     print("WEST")
                     if y_dist in (-1, 0, 1):
-                        if self.pos[1] + 1 <= self.map_size[1] - 1 and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks and y_dist != 1:
+                        if self.pos[1] + 1 <= self.map_size[1] - 1 and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks and y_dist != 1 and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0], self.pos[1] + 1]):
                             return self.dig_map(Direction.SOUTH)
-                        elif ([self.pos[0], self.pos[1] - 1]) not in self.pos_rocks and y_dist != -1 and self.pos[1] - 1 >= 0:
+                        elif ([self.pos[0], self.pos[1] - 1]) not in self.pos_rocks and y_dist != -1 and self.pos[1] - 1 >= 0 and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0], self.pos[1] - 1]):
                             return self.dig_map(Direction.NORTH)
-                        elif ([self.pos[0] + 1, self.pos[1]]) not in self.pos_rocks and self.pos[0] + 1 <= self.map_size[0] - 1:
+                        elif ([self.pos[0] + 1, self.pos[1]]) not in self.pos_rocks and self.pos[0] + 1 <= self.map_size[0] - 1 and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0] + 1, self.pos[1]]):
                             return self.dig_map(Direction.EAST)
                     return self.dig_map(Direction.WEST)
 
                 elif y_dist == 1 :
                     print("SOUTH")
                     if x_dist in (-1, 0, 1) and ([self.pos[0] - 1, self.pos[1]] or [self.pos[0] + 1, self.pos[1]] or [self.pos[0], self.pos[1] + 1]) not in self.pos_rocks:
-                        if [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks and x_dist != 1:
+                        if [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks and x_dist != 1 and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0] + 1, self.pos[1]]):
                             return self.dig_map(Direction.EAST)
-                        elif ([self.pos[0] - 1, self.pos[1]]) not in self.pos_rocks and x_dist != -1:
+                        elif ([self.pos[0] - 1, self.pos[1]]) not in self.pos_rocks and x_dist != -1 and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0] - 1, self.pos[1]]):
                             return self.dig_map(Direction.WEST)
-                        elif ([self.pos[0], self.pos[1] - 1]) not in self.pos_rocks and self.pos[1] - 1 >= 0:
+                        elif ([self.pos[0], self.pos[1] - 1]) not in self.pos_rocks and self.pos[1] - 1 >= 0 and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0], self.pos[1] - 1]):
                             self.dig_map(Direction.NORTH)
                     return self.dig_map(Direction.SOUTH)
 
                 elif y_dist == -1:
                     print("NORTH")
                     if x_dist in (-1, 0, 1) and ([self.pos[0] - 1, self.pos[1]] or [self.pos[0] + 1, self.pos[1]] or [self.pos[0], self.pos[1] - 1]) not in self.pos_rocks:
-                        if self.pos[0] - 1 not in self.pos_rocks and x_dist != -1:
+                        if self.pos[0] - 1 not in self.pos_rocks and x_dist != -1 and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0] - 1, self.pos[1]]):
                             return self.dig_map(Direction.WEST)
-                        elif ([self.pos[0] + 1, self.pos[1]]) not in self.pos_rocks and x_dist != 1:
+                        elif ([self.pos[0] + 1, self.pos[1]]) not in self.pos_rocks and x_dist != 1 and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0] + 1, self.pos[1]]):
                             return self.dig_map(Direction.EAST)
-                        elif ([self.pos[0], self.pos[1] + 1]) not in self.pos_rocks and self.pos[1] + 1 <= self.map_size[1] - 1:
+                        elif ([self.pos[0], self.pos[1] + 1]) not in self.pos_rocks and self.pos[1] + 1 <= self.map_size[1] - 1 and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0], self.pos[1] + 1]):
                             return self.dig_map(Direction.SOUTH)
                     return self.dig_map(Direction.NORTH)
 
@@ -231,11 +257,11 @@ class Agent:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) and self.is_map_digged_to_direction(Direction.EAST):
                             print("1 - A")
                             return "A"
-                        if ((x_dist != 1 or y_dist not in (-1, 0, 1)) and (x_dist != 2 or y_dist != 0)) and [self.pos[0]+1, self.pos[1]] not in self.pos_rocks:
+                        if ((x_dist != 1 or y_dist not in (-1, 0, 1)) and (x_dist != 2 or y_dist != 0)) and [self.pos[0]+1, self.pos[1]] not in self.pos_rocks and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0] + 1, self.pos[1]]):
                             return self.dig_map(Direction.EAST)
-                        elif (x_dist != 1 or y_dist != -1) and self.pos[1] - 1 >= 0 and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks:
+                        elif (x_dist != 1 or y_dist != -1) and self.pos[1] - 1 >= 0 and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0], self.pos[1] - 1]):
                             return self.dig_map(Direction.NORTH)
-                        elif (x_dist != 1 or y_dist != 1) and self.pos[1] +1 <= self.map_size[1] - 1 and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks:
+                        elif (x_dist != 1 or y_dist != 1) and self.pos[1] +1 <= self.map_size[1] - 1 and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0], self.pos[1] + 1]):
                             return self.dig_map(Direction.SOUTH)
                         elif (x_dist != 1 or y_dist != 0):
                             return self.dig_map(Direction.WEST)
@@ -253,11 +279,11 @@ class Agent:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) and self.is_map_digged_to_direction(Direction.WEST):
                             print("2 - A")
                             return "A"
-                        if ((x_dist != -1 or y_dist not in (-1, 0, 1)) and (x_dist != -2 or y_dist != 0)) and [self.pos[0]-1, self.pos[1]] not in self.pos_rocks:
+                        if ((x_dist != -1 or y_dist not in (-1, 0, 1)) and (x_dist != -2 or y_dist != 0)) and [self.pos[0]-1, self.pos[1]] not in self.pos_rocks and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0] - 1, self.pos[1]]):
                             return self.dig_map(Direction.WEST)
-                        elif (x_dist != -1 or y_dist != -1) and self.pos[1] - 1 >= 0 and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks:
+                        elif (x_dist != -1 or y_dist != -1) and self.pos[1] - 1 >= 0 and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0], self.pos[1] - 1]):
                             return self.dig_map(Direction.NORTH)
-                        elif (x_dist != -1 or y_dist != 1) and self.pos[1] + 1 <= self.map_size[1] - 1 and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks:
+                        elif (x_dist != -1 or y_dist != 1) and self.pos[1] + 1 <= self.map_size[1] - 1 and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0], self.pos[1] + 1]):
                             return self.dig_map(Direction.SOUTH)
                         elif self.pos[0] + 1 <= self.map_size[0] - 1:
                             return self.dig_map(Direction.EAST)
@@ -276,11 +302,11 @@ class Agent:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) and self.is_map_digged_to_direction(Direction.SOUTH):
                             print("3 - A")
                             return "A"
-                        if ((y_dist != 1 or x_dist not in (-1, 0, 1)) and (y_dist != 2 or x_dist != 0)) and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks:
+                        if ((y_dist != 1 or x_dist not in (-1, 0, 1)) and (y_dist != 2 or x_dist != 0)) and [self.pos[0], self.pos[1] + 1] not in self.pos_rocks and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0], self.pos[1] + 1]):
                             return self.dig_map(Direction.SOUTH)
-                        elif (y_dist != 1 or x_dist != 1) and self.pos[0] + 1 <= self.map_size[0] - 1 and [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks:
+                        elif (y_dist != 1 or x_dist != 1) and self.pos[0] + 1 <= self.map_size[0] - 1 and [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0] + 1, self.pos[1]]):
                             return self.dig_map(Direction.EAST)
-                        elif (y_dist != 1 or x_dist != -1) and self.pos[0] -1 >= 0 and [self.pos[0] - 1, self.pos[1]] not in self.pos_rocks:
+                        elif (y_dist != 1 or x_dist != -1) and self.pos[0] -1 >= 0 and [self.pos[0] - 1, self.pos[1]] not in self.pos_rocks and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0] - 1, self.pos[1]]):
                             return self.dig_map(Direction.WEST)
                         elif self.pos[0] - 1 >= 0:
                             return self.dig_map(Direction.NORTH)
@@ -298,11 +324,11 @@ class Agent:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy)  and self.is_map_digged_to_direction(Direction.NORTH):
                             print("4 - A")
                             return "A"
-                        if ((y_dist != -1 or x_dist not in (-1, 0, 1)) and (y_dist != -2 or x_dist != 0)) and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks:
+                        if ((y_dist != -1 or x_dist not in (-1, 0, 1)) and (y_dist != -2 or x_dist != 0)) and [self.pos[0], self.pos[1] - 1] not in self.pos_rocks and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0], self.pos[1] - 1]):
                             return self.dig_map(Direction.NORTH)
-                        elif (y_dist != -1 or x_dist != 1) and self.pos[0] + 1 <= self.map_size[0] - 1 and [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks:
+                        elif (y_dist != -1 or x_dist != 1) and self.pos[0] + 1 <= self.map_size[0] - 1 and [self.pos[0] + 1, self.pos[1]] not in self.pos_rocks and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0] + 1, self.pos[1]]):
                             return self.dig_map(Direction.EAST)
-                        elif (y_dist != -1 or x_dist != -1) and self.pos[0] -1 >= 0 and [self.pos[0] - 1, self.pos[1]] not in self.pos_rocks:
+                        elif (y_dist != -1 or x_dist != -1) and self.pos[0] -1 >= 0 and [self.pos[0] - 1, self.pos[1]] not in self.pos_rocks and not self.will_enemy_fire_at_digdug(chosen_enemy, [self.pos[0] - 1, self.pos[1]]):
                             return self.dig_map(Direction.WEST)
                         elif self.pos[1] + 1 <= self.map_size[1] - 1:
                             return self.dig_map(Direction.SOUTH)
