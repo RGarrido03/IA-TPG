@@ -8,7 +8,7 @@ from mapa import VITAL_SPACE, Map
 from consts import Smart, LIVES, TIMEOUT, MAX_LEN_ROPE, MIN_ENEMIES
 
 logger = logging.getLogger("Game")
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
 
 INITIAL_SCORE = 0
 GAME_SPEED = 20
@@ -47,7 +47,7 @@ class Rope:
     def to_dict(self):
         return {"dir": self._dir, "pos": self._pos}
 
-    def shoot(self, pos, direction):
+    def shoot(self, pos, direction, _rocks):
         if self._dir and direction != self._dir:
             self._pos = []  # reset rope because digdug changed direction
             self._dir = None
@@ -57,6 +57,11 @@ class Rope:
             new_pos = self._map.calc_pos(self._pos[-1], direction, traverse=False)
         else:
             new_pos = self._map.calc_pos(pos, direction, traverse=False)
+
+        if new_pos in [r.pos for r in _rocks]: # we hit a rock
+            self._pos = []
+            self._dir = None
+            return
 
         if new_pos in self._pos:  # we hit a wall
             self._pos = []
@@ -156,7 +161,7 @@ class Game:
             for enemy, pos in zip(level_enemies(level), self.map.enemies_spawn)
         ]
         logger.debug("Enemies: %s", self._enemies)
-        self._rocks = [Rock(p) for p in self.map._rocks]
+        self._rocks = [Rock(p) for p in self.map.rocks_spawn]
 
     def quit(self):
         logger.debug("Quit")
@@ -172,9 +177,9 @@ class Game:
             if self._lastkeypress.isupper():
                 # Parse action
                 if self._lastkeypress in "AB":
-                    self._rope.shoot(self._digdug.pos, self._digdug.direction)
+                    self._rope.shoot(self._digdug.pos, self._digdug.direction, self._rocks)
                     if self._rope.hit(self._enemies):
-                        logger.debug("Enemy hit with rope")
+                        logger.debug("[step=%s] Enemy hit with rope(%s) - enemies: %s", self._step, self._rope.to_dict(), self._enemies)
             else:
                 # if digdug moves we let go of the rope
                 if self._lastkeypress in "wasd" and self._lastkeypress != "":
@@ -205,9 +210,9 @@ class Game:
         return True
 
     def kill_digdug(self):
-        logger.info("Dig Dug has died on step: %s", self._step)
+        logger.info("[step=%s] Dig Dug has died", self._step)
         self._digdug.kill()
-        logger.debug("Dig Dug has now %s lives", self._digdug.lives)
+        logger.debug("[step=%s] Dig Dug has now %s lives", self._step, self._digdug.lives)
         if self._digdug.lives > 0:
             logger.debug("RESPAWN")
             self._digdug.respawn()
@@ -221,16 +226,16 @@ class Game:
     def collision(self):
         for e in self._enemies:
             if e.pos == self._digdug.pos:
-                logger.debug("%s has killed %s", e, self._digdug)
+                logger.debug("[step=%s] %s has killed %s", self._step, e, self._digdug)
                 self.kill_digdug()
                 e.respawn()
             if e._name == "Fygar" and e.fire:
                 if self._digdug.pos in e.fire:
-                    logger.debug("%s has killed %s with fire", e, self._digdug)
+                    logger.debug("[step=%s] %s has killed %s with fire", self._step, e, self._digdug)
                     self.kill_digdug()
         for r in self._rocks:
             if r.pos == self._digdug.pos:
-                logger.debug("%s has killed %s", r, self._digdug)
+                logger.debug("[step=%s] %s has killed %s", self._step, r, self._digdug)
                 self.kill_digdug()
             for e in self._enemies:
                 if r.pos == e.pos:

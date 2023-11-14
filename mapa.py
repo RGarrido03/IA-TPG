@@ -111,6 +111,10 @@ class Map:
     @property
     def enemies_spawn(self):
         return self._enemies_spawn
+    
+    @property
+    def rocks_spawn(self):
+        return self._rocks
 
     @property
     def digged(self):
@@ -129,8 +133,6 @@ class Map:
     def is_blocked(self, pos, traverse):
         x, y = pos
         if x not in range(self.hor_tiles) or y not in range(self.ver_tiles):
-            return True
-        if pos in self._rocks:
             return True
         if self.map[x][y] == Tiles.PASSAGE:
             return False
