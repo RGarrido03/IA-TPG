@@ -64,6 +64,7 @@ class Agent:
         self.score: int = 0
         self.step: int = 0
         self.timeout: int = 0
+        self.ts: float = 0.0
         self.map: list = []
         self.map_size: list = []
         self.pos_rocks: list = []
@@ -201,6 +202,9 @@ class Agent:
 
     def get_key(self, state: dict) -> str:
         if "digdug" in state:
+            self.ts: float = state["ts"]
+            print("\nTimestamp from server:", self.ts)
+            print("Timestamp before tree search:", time.time())
             self.last_pos: list[int] = self.pos
             self.pos: list[int] = state["digdug"]
             self.dir: Direction = self.get_digdug_direction()
@@ -212,7 +216,8 @@ class Agent:
 
             other_enemies = [enemy for enemy in self.enemies if enemy["id"] != chosen_enemy["id"]]
 
-            print("\npos digdug: ", self.pos)
+            print("Timestamp after tree search:", time.time())
+            print("pos digdug: ", self.pos)
             print("pos enemy: ", chosen_enemy["pos"])
             print("pos other enemies: ", [enemy["pos"] for enemy in other_enemies])
             print("enemies: " + str(self.enemies))
@@ -473,6 +478,7 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                 #print("Received game update: ", state)
 
                 key: str = agent.get_key(state)
+                print("Timestamp after calculating tree:", time.time())
                 await websocket.send(
                     json.dumps({"cmd": "key", "key": key})
                 )
