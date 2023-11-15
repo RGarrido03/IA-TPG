@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from datetime import datetime
 import json
 import logging
 import os.path
@@ -149,9 +150,9 @@ class GameServer:
                         game_info = self.game.info()
                         await self.send_info(game_info)
 
-                    if state:= await self.game.next_frame():
+                    if state := await self.game.next_frame():
                         state["player"] = self.current_player.name
-
+                        state["ts"] = datetime.utcnow().astimezone().timestamp()
                         state = json.dumps(state)
 
                         await self.current_player.ws.send(state)
