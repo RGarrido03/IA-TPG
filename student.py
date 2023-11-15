@@ -139,7 +139,7 @@ class Agent:
             self.map[self.pos[0]][self.pos[1] - 1] = 0
             return "w"
 
-    def get_lower_cost_enemy(self) -> tuple[dict, list[dict]]:
+    def get_lower_cost_enemy(self) -> dict:
         connections = []
         coordinates = {}
         for enemy in self.enemies:
@@ -151,7 +151,6 @@ class Agent:
         map_points = PointsGraph(connections, coordinates)
 
         chosen_enemy = {"pos": [0, 0], "cost": float("inf")}
-        other_enemies = []
 
         for enemy in self.enemies:
             #if "traverse" not in enemy or len(self.enemies) == 1:
@@ -162,14 +161,11 @@ class Agent:
             enemy["x_dist"]: int = enemy["pos"][0] - self.pos[0]
             enemy["y_dist"]: int = enemy["pos"][1] - self.pos[1]
             enemy["dist"]: int = abs(enemy["x_dist"]) + abs(enemy["y_dist"])
-
             enemy["cost"] = t.cost
-            enemy["name"] = enemy["name"]
+
             if enemy["cost"] < chosen_enemy["cost"]:
                 chosen_enemy = enemy
-            else:
-                other_enemies.append(enemy)
-        return chosen_enemy, other_enemies
+        return chosen_enemy
 
     def will_enemy_fire_at_digdug(self, enemies: [], digdug_new_pos: list[int]) -> bool:
         
@@ -212,8 +208,7 @@ class Agent:
             if 'rocks' in state:
                 self.pos_rocks: list = [rock["pos"] for rock in state["rocks"]]
 
-            chosen_enemy, _ = self.get_lower_cost_enemy()
-
+            chosen_enemy = self.get_lower_cost_enemy()
             other_enemies = [enemy for enemy in self.enemies if enemy["id"] != chosen_enemy["id"]]
 
             print("Timestamp after tree search:", time.time())
@@ -221,7 +216,7 @@ class Agent:
             print("pos enemy: ", chosen_enemy["pos"])
             print("pos other enemies: ", [enemy["pos"] for enemy in other_enemies])
             print("enemies: " + str(self.enemies))
-            print(chosen_enemy)
+            print("chosen enemy:", chosen_enemy)
             
             if len(self.previous_pos) == 6:
                 print("pos: ", str(self.pos))
@@ -234,7 +229,7 @@ class Agent:
                 self.previous_pos.append(self.pos)
                 self.previous_dir.append(self.dir)
 
-            if not "dist" in chosen_enemy:
+            if "dist" not in chosen_enemy:
                 print("-> No enemy")
                 return " "
             
