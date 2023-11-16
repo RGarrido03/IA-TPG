@@ -144,10 +144,10 @@ class Agent:
         if (0 <= x < self.map_size[0] and 0 <= y < self.map_size[1]
                 and not self.will_enemy_fire_at_digdug([x, y])
                 and [x, y] not in self.pos_rocks) and not self.checkDistAllEnemies([x, y]):
-                self.map[x][y] = 0
+            self.map[x][y] = 0
 
-                print("Real move after checks: ", direction.name)
-                return key
+            print("Real move after checks: ", direction.name)
+            return key
                 
         return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
     
@@ -158,17 +158,16 @@ class Agent:
         for enemy in self.enemies:
             if enemy["name"] == "Fygar" and self.map[x][y] == 1:
                 tooClose = False
-            elif Direction.NORTH and ( (enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y ) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y ) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y)) :
+            elif Direction.NORTH and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y)):
                 tooClose = True
-            elif Direction.SOUTH and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y ) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y ) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
+            elif Direction.SOUTH and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
                 tooClose = True
-            elif Direction.EAST and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y ) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
+            elif Direction.EAST and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
                 tooClose = True
-            elif Direction.WEST and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y ) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
+            elif Direction.WEST and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
                 tooClose = True
 
         return tooClose
-
 
     def get_lower_cost_enemy(self) -> dict:
         connections = []
@@ -184,7 +183,6 @@ class Agent:
         chosen_enemy = {"pos": [0, 0], "cost": float("inf")}
 
         for enemy in self.enemies:
-            #if "traverse" not in enemy or len(self.enemies) == 1:
             p = SearchProblem(map_points, 'digdug', enemy["id"])
             t = SearchTree(p, 'a*')
             t.search()
@@ -199,7 +197,6 @@ class Agent:
         return chosen_enemy
 
     def will_enemy_fire_at_digdug(self, digdug_new_pos: list[int]) -> bool:
-    
         for enemy in self.enemies:
             if "name" not in enemy or enemy["name"] != "Fygar":
                 return False
@@ -214,12 +211,12 @@ class Agent:
                     digdug_new_pos[1] in (enemy["pos"][1] + 1, enemy["pos"][1] + 2, enemy["pos"][1] + 3, enemy["pos"][1] + 4):
                 return True
 
-            if  enemy["dir"] == Direction.EAST and \
+            if enemy["dir"] == Direction.EAST and \
                     digdug_new_pos[1] == enemy["pos"][1] and \
                     digdug_new_pos[0] in (enemy["pos"][0] + 1, enemy["pos"][0] + 2, enemy["pos"][0] + 3, enemy["pos"][0] + 4):
                 return True
 
-            if  enemy["dir"] == Direction.WEST and \
+            if enemy["dir"] == Direction.WEST and \
                     digdug_new_pos[1] == enemy["pos"][1] and \
                     digdug_new_pos[0] in (enemy["pos"][0] - 1, enemy["pos"][0] - 2, enemy["pos"][0] - 3, enemy["pos"][0] - 4):
                 return True
