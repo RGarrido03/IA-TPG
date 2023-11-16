@@ -67,6 +67,22 @@ class Character:
     def move(self, mapa, rocks):
         raise NotImplementedError
 
+    def _calc_dir(self, old_pos, new_pos):
+        if old_pos[0] < new_pos[0]:
+            return Direction.EAST
+        elif old_pos[0] > new_pos[0]:
+            return Direction.WEST
+        elif old_pos[1] < new_pos[1]:
+            return Direction.SOUTH
+        elif old_pos[1] > new_pos[1]:
+            return Direction.NORTH
+        logger.error(
+            "Can't calculate direction from %s to %s, please report as this is a bug",
+            old_pos,
+            new_pos,
+        )
+        return None
+
 
 class Rock(Character):
     def __init__(self, pos):
@@ -133,7 +149,7 @@ class Enemy(Character):
         self.dir = list(Direction)
         self.step = 0
         self.lastdir = Direction.EAST
-        self.lastpos = None
+        self.lastpos = pos
         self.freeze = False
         self._alive = lives  # TODO increase according to level
         self.exit = False
@@ -166,7 +182,7 @@ class Enemy(Character):
         return str(self)
 
     def __str__(self):
-        return f"{self._name}({self.pos}, {self._wallpass}, {self._smart})"
+        return f"{self._name}({self.pos}, {self._wallpass}, {self._smart.name})"
 
     def points(self, map_height):
         if self._points:
@@ -252,8 +268,11 @@ class Enemy(Character):
             else:
                 next_pos = sorted(open_pos, key=lambda pos: math.dist(digdug.pos, pos))
                 new_pos = next_pos[0]
+
         self.lastpos = self.pos
         self.pos = new_pos
+        if self._smart in [Smart.NORMAL, Smart.HIGH] and self.lastpos != self.pos:  # LOW does not require direction calculation
+            self.lastdir = self._calc_dir(self.lastpos, self.pos)
 
         if math.dist(self.pos, (0, 0)) < 1:
             self.exit = True
@@ -273,9 +292,6 @@ class Pooka(Enemy):
         self.go_to_corridor = pos
 
     def move(self, mapa, digdug, enemies, rocks):
-        if not self._wallpass:
-            self._wallpass = random.random() < WALLPASS_ODD[self._smart]
-
         if self._wallpass:
             open_pos = [
                 pos
@@ -294,11 +310,16 @@ class Pooka(Enemy):
                 new_pos = next_pos[0]
             self.lastpos = self.pos
             self.pos = new_pos
+            if self.lastpos != self.pos:
+                self.lastdir = self._calc_dir(self.lastpos, self.pos)
         else:
             super().move(mapa, digdug, enemies, rocks)
         if self._wallpass and not mapa.is_blocked(self.pos, False):
             self._wallpass = False
             self.go_to_corridor = random.choice(mapa.enemies_spawn)
+        
+        if not self._wallpass:
+            self._wallpass = random.random() < WALLPASS_ODD[self._smart]
 
 
 class Fygar(Enemy):
