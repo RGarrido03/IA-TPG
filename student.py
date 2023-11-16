@@ -228,8 +228,6 @@ class Agent:
     def get_key(self, state: dict) -> str:
         if "digdug" in state:
             self.ts: float = state["ts"]
-            print("\nTimestamp from server:", self.ts)
-            print("Timestamp before tree search:", time.time())
             self.last_pos: list[int] = self.pos
             self.pos: list[int] = state["digdug"]
             self.dir: Direction = self.get_digdug_direction()
@@ -238,20 +236,14 @@ class Agent:
                 self.pos_rocks: list = [rock["pos"] for rock in state["rocks"]]
 
             chosen_enemy = self.get_lower_cost_enemy()
-            other_enemies = [enemy for enemy in self.enemies if enemy["id"] != chosen_enemy["id"]]
 
-            print("Timestamp after tree search:", time.time())
-            print("pos digdug: ", self.pos)
-            print("pos enemy: ", chosen_enemy["pos"])
-            print("pos other enemies: ", [enemy["pos"] for enemy in other_enemies])
-            print("enemies: " + str(self.enemies))
-            print("chosen enemy:", chosen_enemy)
+            print("\n--------------------")
+            print("\npos digdug: ", self.pos)
+            print("\nenemies: " + str(self.enemies))
+            print("\nchosen enemy:", chosen_enemy)
 
             if "dist" not in chosen_enemy:
-                print("-> No enemy")
                 return ""
-            
-            print("dir enemy: ", chosen_enemy["dir"])
 
             x_dist: int = chosen_enemy["x_dist"]
             y_dist: int = chosen_enemy["y_dist"]
@@ -259,59 +251,45 @@ class Agent:
             
             # Change the direction when it bugs and just follows the enemy
             if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
-                print("BUG")
                 if x_dist == 1:
-                    print("EAST")
                     if y_dist in (0, -1, 1):
                         return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
-                    print("3º - EAST")
                     return self.dig_map(Direction.EAST)
 
                 elif x_dist == -1:
-                    print("WEST")
                     if y_dist in (-1, 0, 1):
                         return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
-                    print("4º - WEST")
                     return self.dig_map(Direction.WEST)
 
                 elif y_dist == 1:
-                    print("SOUTH")
                     if x_dist in (-1, 0, 1):
                         return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
-                    print("5º - SOUTH")
                     return self.dig_map(Direction.SOUTH)
 
                 elif y_dist == -1:
-                    print("NORTH")
                     if x_dist in (-1, 0, 1):
                         return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
-                    print("6º - NORTH")
                     return self.dig_map(Direction.NORTH)
 
             # Move around the map
             if abs(x_dist) >= abs(y_dist):
-                print("X")
                 if x_dist > 0:
                     if dist <= 3:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) \
                                 and self.is_map_digged_to_direction(Direction.EAST) \
                                 and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.checkDistAllEnemies(self.pos):
-                            print("1 - A")
                             return "A"
                         else:
                             return self.dig_map(Direction.EAST, [Direction.NORTH, Direction.SOUTH, Direction.WEST])
-                    print("8º - EAST")
                     return self.dig_map(Direction.EAST, [Direction.SOUTH, Direction.NORTH, Direction.WEST])
                 elif x_dist < 0:
                     if dist <= 3:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) \
                                 and self.is_map_digged_to_direction(Direction.WEST) \
                                 and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.checkDistAllEnemies(self.pos):
-                            print("2 - A")
                             return "A"
                         else:
                             return self.dig_map(Direction.WEST, [Direction.NORTH, Direction.SOUTH, Direction.EAST])
-                    print("10º - WEST")
                     return self.dig_map(Direction.WEST, [Direction.NORTH, Direction.SOUTH, Direction.EAST])
             else:
                 if y_dist > 0:
@@ -319,29 +297,24 @@ class Agent:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) \
                                 and self.is_map_digged_to_direction(Direction.SOUTH) \
                                 and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.checkDistAllEnemies(self.pos):
-                            print("3 - A")
                             return "A"
                         else:
                             return self.dig_map(Direction.SOUTH, [Direction.EAST, Direction.WEST, Direction.NORTH])
-                    print("12º - SOUTH")
                     return self.dig_map(Direction.SOUTH, [Direction.EAST, Direction.WEST, Direction.NORTH])
                 elif y_dist < 0:
                     if dist <= 3:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) \
                                 and self.is_map_digged_to_direction(Direction.NORTH) \
                                 and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.checkDistAllEnemies(self.pos):
-                            print("4 - A")
                             return "A"
                         else:
                             return self.dig_map(Direction.NORTH, [Direction.EAST, Direction.WEST, Direction.SOUTH])
-                    print("14º - NORTH")
                     return self.dig_map(Direction.NORTH, [Direction.EAST, Direction.WEST, Direction.SOUTH])
                 
         else:
             self.map = state["map"]
             self.map_size = state["size"]
 
-        print("Nothing to do")
         return " "
 
 
@@ -360,15 +333,12 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
                     await websocket.recv()
                 )
 
-                #print("Received game update: ", state)
-
                 key: str = agent.get_key(state)
-                print("Timestamp after calculating tree:", time.time())
                 await websocket.send(
                     json.dumps({"cmd": "key", "key": key})
                 )
 
-                # 10Hz time sync
+                # Time sync
                 time.sleep((1 / game.GAME_SPEED) - ((time.monotonic() - starttime) % (1 / game.GAME_SPEED)))
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
