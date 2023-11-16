@@ -131,49 +131,24 @@ class Agent:
         if fallback is None:
             fallback = []
 
-        if direction == Direction.NORTH:
-            x = self.pos[0]
-            y = self.pos[1] - 1
-            if y >= 0 and \
-                    not self.will_enemy_fire_at_digdug(self.enemies, [x, y]) and \
-                    [x, y] not in self.pos_rocks:
-                self.map[x][y] = 0
-                print("Real move after checks: ", direction.name)
-                return "w"
-            return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
+        direction_mapping: dict[Direction, tuple[int, int, str]] = {
+            Direction.NORTH: (0, -1, "w"),
+            Direction.SOUTH: (0, 1, "s"),
+            Direction.WEST: (-1, 0, "a"),
+            Direction.EAST: (1, 0, "d"),
+        }
 
-        if direction == Direction.SOUTH:
-            x = self.pos[0]
-            y = self.pos[1] + 1
-            if y <= self.map_size[1] - 1 and \
-                    not self.will_enemy_fire_at_digdug(self.enemies, [x, y]) and \
-                    [x, y] not in self.pos_rocks:
-                self.map[x][y] = 0
-                print("Real move after checks: ", direction.name)
-                return "s"
-            return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
+        dx, dy, key = direction_mapping[direction]
+        x = self.pos[0] + dx
+        y = self.pos[1] + dy
 
-        if direction == Direction.WEST:
-            x = self.pos[0] - 1
-            y = self.pos[1]
-            if x >= 0 and \
-                    not self.will_enemy_fire_at_digdug(self.enemies, [x, y]) and \
-                    [x, y] not in self.pos_rocks:
-                self.map[x][y] = 0
-                print("Real move after checks: ", direction.name)
-                return "a"
-            return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
-
-        if direction == Direction.EAST:
-            x = self.pos[0] + 1
-            y = self.pos[1]
-            if x <= self.map_size[0] - 1 and \
-                    not self.will_enemy_fire_at_digdug(self.enemies, [x, y]) and \
-                    [x, y] not in self.pos_rocks:
-                self.map[x][y] = 0
-                print("Real move after checks: ", direction.name)
-                return "d"
-            return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
+        if (0 <= x < self.map_size[0] and 0 <= y < self.map_size[1]
+                and not self.will_enemy_fire_at_digdug(self.enemies, [x, y])
+                and [x, y] not in self.pos_rocks):
+            self.map[x][y] = 0
+            print("Real move after checks: ", direction.name)
+            return key
+        return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
 
     def get_lower_cost_enemy(self) -> dict:
         connections = []
