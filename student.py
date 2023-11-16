@@ -125,7 +125,7 @@ class Agent:
             return True
         return False
 
-    def dig_map(self, direction: Direction | None, fallback=None) -> str:
+    def dig_map(self, direction: Direction | None, fallback=None, enemies=[]) -> str:
         if direction is None:
             return ""
         if fallback is None:
@@ -145,10 +145,23 @@ class Agent:
         if (0 <= x < self.map_size[0] and 0 <= y < self.map_size[1]
                 and not self.will_enemy_fire_at_digdug(self.enemies, [x, y])
                 and [x, y] not in self.pos_rocks):
-            self.map[x][y] = 0
-            print("Real move after checks: ", direction.name)
-            return key
-        return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
+                can = True
+                for enemy in enemies:
+                    if Direction.NORTH and ( (enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y ) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y ) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y)) :
+                        can = False
+                    elif Direction.SOUTH and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y ) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y ) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
+                        can = False
+                    elif Direction.EAST and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y ) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
+                        can = False
+                    elif Direction.WEST and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y ) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
+                        can = False
+                if can:
+                    self.map[x][y] = 0
+
+                    print("Real move after checks: ", direction.name)
+                    return key
+                
+        return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:], enemies)
 
     def get_lower_cost_enemy(self) -> dict:
         connections = []
@@ -256,18 +269,19 @@ class Agent:
             top = [enemy for enemy in other_enemies if enemy["dist"] <= 3 and enemy["pos"][0] == self.pos[0] and enemy["pos"][1] < self.pos[1]]
             bottom = [enemy for enemy in other_enemies if enemy["dist"] <= 3 and enemy["pos"][0] == self.pos[0] and enemy["pos"][1] > self.pos[1]]
 
-            if len(left + right + top + bottom) >= 1:
-                print("-> Multiple enemies")
-                sorted_enemies = sorted([(Direction.SOUTH, len(bottom)), (Direction.WEST, len(left)), (Direction.EAST, len(right)), (Direction.NORTH, len(top))], key=lambda x: x[1])
-                for new_dir, length in sorted_enemies:
-                    if ((new_dir == Direction.SOUTH and self.pos[1] + 1 <= self.map_size[1] - 1) or
-                            (new_dir == Direction.WEST and self.pos[0] - 1 >= 0) or
-                            (new_dir == Direction.EAST and self.pos[0] + 1 <= self.map_size[0] - 1) or
-                            (new_dir == Direction.NORTH and self.pos[1] - 1 >= 0)):
-                        print("   " + sorted_enemies[0][0].name)
-                        print("2º - dig new dir: ", new_dir)
-                        return self.dig_map(new_dir)
-
+            
+            #if len(left + right + top + bottom) >= 1:
+            #    print("-> Multiple enemies")
+            #    sorted_enemies = sorted([(Direction.SOUTH, len(bottom)), (Direction.WEST, len(left)), (Direction.EAST, len(right)), (Direction.NORTH, len(top))], key=lambda x: x[1])
+            #    for new_dir, length in sorted_enemies:
+            #        if ((new_dir == Direction.SOUTH and self.pos[1] + 1 <= self.map_size[1] - 1) or
+            #                (new_dir == Direction.WEST and self.pos[0] - 1 >= 0) or
+            #                (new_dir == Direction.EAST and self.pos[0] + 1 <= self.map_size[0] - 1) or
+            #                (new_dir == Direction.NORTH and self.pos[1] - 1 >= 0)):
+            #            print("   " + sorted_enemies[0][0].name)
+            #            print("2º - dig new dir: ", new_dir)
+            #            return self.dig_map(new_dir, )
+            
             # Change the direction when it bugs and just follows the enemy
             if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
                 print("BUG")
@@ -276,56 +290,56 @@ class Agent:
                     if y_dist in (0, -1, 1):
                         if y_dist != -1:
                             print("3º - NORTH")
-                            return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
+                            return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST], self.enemies)
                         if y_dist != 1:
                             print("3º - SOUTH")
-                            return self.dig_map(Direction.SOUTH, [Direction.WEST, Direction.EAST])
+                            return self.dig_map(Direction.SOUTH, [Direction.WEST, Direction.EAST], self.enemies)
                         print("3º - WEST")
-                        return self.dig_map(Direction.WEST, [Direction.EAST])
+                        return self.dig_map(Direction.WEST, [Direction.EAST], self.enemies)
                     print("3º - EAST")
-                    return self.dig_map(Direction.EAST)
+                    return self.dig_map(Direction.EAST, enemies=self.enemies)
 
                 elif x_dist == -1:
                     print("WEST")
                     if y_dist in (-1, 0, 1):
                         if y_dist != 1:
                             print("4º - SOUTH")
-                            return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
+                            return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST], self.enemies)
                         if y_dist != -1:
                             print("4º - NORTH")
-                            return self.dig_map(Direction.NORTH, [Direction.EAST, Direction.WEST])
+                            return self.dig_map(Direction.NORTH, [Direction.EAST, Direction.WEST],self.enemies)
                         print("4º - EAST")
-                        return self.dig_map(Direction.EAST, [Direction.WEST])
+                        return self.dig_map(Direction.EAST, [Direction.WEST], self.enemies)
                     print("4º - WEST")
-                    return self.dig_map(Direction.WEST)
+                    return self.dig_map(Direction.WEST, enemies=self.enemies)
 
                 elif y_dist == 1:
                     print("SOUTH")
                     if x_dist in (-1, 0, 1):
                         if x_dist != 1:
                             print("5º - EAST")
-                            return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
+                            return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH], self.enemies)
                         elif x_dist != -1:
                             print("5º - WEST")
-                            return self.dig_map(Direction.WEST, [Direction.NORTH, Direction.SOUTH])
+                            return self.dig_map(Direction.WEST, [Direction.NORTH, Direction.SOUTH], self.enemies)
                         print("5º - NORTH")
-                        return self.dig_map(Direction.NORTH, [Direction.SOUTH])
+                        return self.dig_map(Direction.NORTH, [Direction.SOUTH], self.enemies)
                     print("5º - SOUTH")
-                    return self.dig_map(Direction.SOUTH)
+                    return self.dig_map(Direction.SOUTH, enemies=self.enemies)
 
                 elif y_dist == -1:
                     print("NORTH")
                     if x_dist in (-1, 0, 1):
                         if x_dist != -1:
                             print("6º - WEST")
-                            return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
+                            return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH], self.enemies)
                         elif x_dist != 1:
                             print("6º - EAST")
-                            return self.dig_map(Direction.EAST, [Direction.SOUTH, Direction.NORTH])
+                            return self.dig_map(Direction.EAST, [Direction.SOUTH, Direction.NORTH], self.enemies)
                         print("6º - SOUTH")
-                        return self.dig_map(Direction.SOUTH, [Direction.NORTH])
+                        return self.dig_map(Direction.SOUTH, [Direction.NORTH], self.enemies)
                     print("6º - NORTH")
-                    return self.dig_map(Direction.NORTH)
+                    return self.dig_map(Direction.NORTH, enemies=self.enemies)
 
             # Move around the map
             if abs(x_dist) >= abs(y_dist):
@@ -339,16 +353,16 @@ class Agent:
                             return "A"
                         if (x_dist != 1 or y_dist not in (-1, 0, 1)) and (x_dist != 2 or y_dist != 0):
                             print("7º - EAST")
-                            return self.dig_map(Direction.EAST, [Direction.NORTH, Direction.SOUTH, Direction.WEST])
+                            return self.dig_map(Direction.EAST, [Direction.NORTH, Direction.SOUTH, Direction.WEST], self.enemies)
                         elif x_dist != 1 or y_dist != -1:
                             print("7º - NORTH")
-                            return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST])
+                            return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST],self.enemies)
                         elif x_dist != 1 or y_dist != 1:
                             print("7º - SOUTH")
-                            return self.dig_map(Direction.SOUTH, [Direction.WEST])
+                            return self.dig_map(Direction.SOUTH, [Direction.WEST], self.enemies)
                         elif x_dist != 1 or y_dist != 0:
                             print("7º - WEST")
-                            return self.dig_map(Direction.WEST)
+                            return self.dig_map(Direction.WEST, enemies=self.enemies)
                     print("8º - EAST")
                     return self.dig_map(Direction.EAST, [Direction.SOUTH, Direction.NORTH, Direction.WEST])
                 elif x_dist < 0:
@@ -360,17 +374,17 @@ class Agent:
                             return "A"
                         if (x_dist != -1 or y_dist not in (-1, 0, 1)) and (x_dist != -2 or y_dist != 0):
                             print("9º - WEST")
-                            return self.dig_map(Direction.WEST, [Direction.NORTH, Direction.SOUTH, Direction.EAST])
+                            return self.dig_map(Direction.WEST, [Direction.NORTH, Direction.SOUTH, Direction.EAST], self.enemies)
                         elif x_dist != -1 or y_dist != -1:
                             print("9º - NORTH")
-                            return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.EAST])
+                            return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.EAST], self.enemies)
                         elif x_dist != -1 or y_dist != 1:
                             print("9º - SOUTH")
-                            return self.dig_map(Direction.SOUTH, [Direction.EAST])
+                            return self.dig_map(Direction.SOUTH, [Direction.EAST], self.enemies)
                         print("9º - EAST")
-                        return self.dig_map(Direction.EAST)
+                        return self.dig_map(Direction.EAST, enemies=self.enemies)
                     print("10º - WEST")
-                    return self.dig_map(Direction.WEST, [Direction.NORTH, Direction.SOUTH, Direction.EAST])
+                    return self.dig_map(Direction.WEST, [Direction.NORTH, Direction.SOUTH, Direction.EAST],self.enemies)
             else:
                 if y_dist > 0:
                     if dist <= 3:
@@ -381,17 +395,17 @@ class Agent:
                             return "A"
                         if (y_dist != 1 or x_dist not in (-1, 0, 1)) and (y_dist != 2 or x_dist != 0):
                             print("11º - SOUTH")
-                            return self.dig_map(Direction.SOUTH, [Direction.EAST, Direction.WEST, Direction.NORTH])
+                            return self.dig_map(Direction.SOUTH, [Direction.EAST, Direction.WEST, Direction.NORTH], self.enemies)
                         elif y_dist != 1 or x_dist != 1:
                             print("11º - EAST")
-                            return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH])
+                            return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH], self.enemies)
                         elif y_dist != 1 or x_dist != -1:
                             print("11º - WEST")
-                            return self.dig_map(Direction.WEST, [Direction.NORTH])
+                            return self.dig_map(Direction.WEST, [Direction.NORTH], self.enemies)
                         print("11º - NORTH")
-                        return self.dig_map(Direction.NORTH)
+                        return self.dig_map(Direction.NORTH, enemies=self.enemies)
                     print("12º - SOUTH")
-                    return self.dig_map(Direction.SOUTH, [Direction.EAST, Direction.WEST, Direction.NORTH])
+                    return self.dig_map(Direction.SOUTH, [Direction.EAST, Direction.WEST, Direction.NORTH], self.enemies)
                 elif y_dist < 0:
                     if dist <= 3:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) \
@@ -401,17 +415,18 @@ class Agent:
                             return "A"
                         if (y_dist != -1 or x_dist not in (-1, 0, 1)) and (y_dist != -2 or x_dist != 0):
                             print("13º - NORTH")
-                            return self.dig_map(Direction.NORTH)
+                            return self.dig_map(Direction.NORTH, [Direction.EAST, Direction.WEST, Direction.SOUTH],  self.enemies)
                         elif y_dist != -1 or x_dist != 1:
                             print("13º - EAST")
-                            return self.dig_map(Direction.EAST)
+                            return self.dig_map(Direction.EAST, [Direction.WEST, Direction.SOUTH], self.enemies)
                         elif y_dist != -1 or x_dist != -1:
                             print("13º - WEST")
-                            return self.dig_map(Direction.WEST)
+                            return self.dig_map(Direction.WEST, [Direction.SOUTH], self.enemies)
                         print("13º - SOUTH")
-                        return self.dig_map(Direction.SOUTH)
+                        return self.dig_map(Direction.SOUTH, enemies=self.enemies)
                     print("14º - NORTH")
-                    return self.dig_map(Direction.NORTH, [Direction.EAST, Direction.WEST, Direction.SOUTH])
+                    return self.dig_map(Direction.NORTH, [Direction.EAST, Direction.WEST, Direction.SOUTH], self.enemies)
+                
         else:
             self.map = state["map"]
             self.map_size = state["size"]
