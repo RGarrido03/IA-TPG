@@ -251,22 +251,22 @@ class Agent:
                 if x_dist == 1:
                     if y_dist in (0, -1, 1):
                         return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
-                    return self.dig_map(Direction.EAST)
+                    return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
 
                 elif x_dist == -1:
                     if y_dist in (-1, 0, 1):
                         return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
-                    return self.dig_map(Direction.WEST)
+                    return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
 
                 elif y_dist == 1:
                     if x_dist in (-1, 0, 1):
                         return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
-                    return self.dig_map(Direction.SOUTH)
+                    return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
 
                 elif y_dist == -1:
                     if x_dist in (-1, 0, 1):
                         return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
-                    return self.dig_map(Direction.NORTH)
+                    return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.EAST, Direction.WEST])
 
             # Move around the map
             if abs(x_dist) >= abs(y_dist):
