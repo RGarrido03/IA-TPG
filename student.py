@@ -125,7 +125,12 @@ class Agent:
             return True
         return False
 
-    def dig_map(self, direction: Direction) -> str:
+    def dig_map(self, direction: Direction | None, fallback=None) -> str:
+        if direction is None:
+            return ""
+        if fallback is None:
+            fallback = []
+
         if direction == Direction.NORTH:
             x = self.pos[0]
             y = self.pos[1] - 1
@@ -135,7 +140,7 @@ class Agent:
                 self.map[x][y] = 0
                 print("Real move after checks: ", direction.name)
                 return "w"
-            return self.dig_map(Direction.EAST)
+            return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
 
         if direction == Direction.SOUTH:
             x = self.pos[0]
@@ -146,7 +151,7 @@ class Agent:
                 self.map[x][y] = 0
                 print("Real move after checks: ", direction.name)
                 return "s"
-            return self.dig_map(Direction.WEST)
+            return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
 
         if direction == Direction.WEST:
             x = self.pos[0] - 1
@@ -157,7 +162,7 @@ class Agent:
                 self.map[x][y] = 0
                 print("Real move after checks: ", direction.name)
                 return "a"
-            return self.dig_map(Direction.NORTH)
+            return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
 
         if direction == Direction.EAST:
             x = self.pos[0] + 1
@@ -168,7 +173,7 @@ class Agent:
                 self.map[x][y] = 0
                 print("Real move after checks: ", direction.name)
                 return "d"
-            return self.dig_map(Direction.SOUTH)
+            return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
 
     def get_lower_cost_enemy(self) -> dict:
         connections = []
@@ -296,12 +301,12 @@ class Agent:
                     if y_dist in (0, -1, 1):
                         if y_dist != -1:
                             print("3º - NORTH")
-                            return self.dig_map(Direction.NORTH)
+                            return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
                         if y_dist != 1:
                             print("3º - SOUTH")
-                            return self.dig_map(Direction.SOUTH)
+                            return self.dig_map(Direction.SOUTH, [Direction.WEST, Direction.EAST])
                         print("3º - WEST")
-                        return self.dig_map(Direction.WEST)
+                        return self.dig_map(Direction.WEST, [Direction.EAST])
                     print("3º - EAST")
                     return self.dig_map(Direction.EAST)
 
@@ -310,12 +315,12 @@ class Agent:
                     if y_dist in (-1, 0, 1):
                         if y_dist != 1:
                             print("4º - SOUTH")
-                            return self.dig_map(Direction.SOUTH)
+                            return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
                         if y_dist != -1:
                             print("4º - NORTH")
-                            return self.dig_map(Direction.NORTH)
+                            return self.dig_map(Direction.NORTH, [Direction.EAST, Direction.WEST])
                         print("4º - EAST")
-                        return self.dig_map(Direction.EAST)
+                        return self.dig_map(Direction.EAST, [Direction.WEST])
                     print("4º - WEST")
                     return self.dig_map(Direction.WEST)
 
@@ -324,12 +329,12 @@ class Agent:
                     if x_dist in (-1, 0, 1):
                         if x_dist != 1:
                             print("5º - EAST")
-                            return self.dig_map(Direction.EAST)
+                            return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
                         elif x_dist != -1:
                             print("5º - WEST")
-                            return self.dig_map(Direction.WEST)
+                            return self.dig_map(Direction.WEST, [Direction.NORTH, Direction.SOUTH])
                         print("5º - NORTH")
-                        return self.dig_map(Direction.NORTH)
+                        return self.dig_map(Direction.NORTH, [Direction.SOUTH])
                     print("5º - SOUTH")
                     return self.dig_map(Direction.SOUTH)
 
@@ -338,12 +343,12 @@ class Agent:
                     if x_dist in (-1, 0, 1):
                         if x_dist != -1:
                             print("6º - WEST")
-                            return self.dig_map(Direction.WEST)
+                            return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
                         elif x_dist != 1:
                             print("6º - EAST")
-                            return self.dig_map(Direction.EAST)
+                            return self.dig_map(Direction.EAST, [Direction.SOUTH, Direction.NORTH])
                         print("6º - SOUTH")
-                        return self.dig_map(Direction.SOUTH)
+                        return self.dig_map(Direction.SOUTH, [Direction.NORTH])
                     print("6º - NORTH")
                     return self.dig_map(Direction.NORTH)
 
@@ -359,18 +364,18 @@ class Agent:
                             return "A"
                         if (x_dist != 1 or y_dist not in (-1, 0, 1)) and (x_dist != 2 or y_dist != 0):
                             print("7º - EAST")
-                            return self.dig_map(Direction.EAST)
+                            return self.dig_map(Direction.EAST, [Direction.NORTH, Direction.SOUTH, Direction.WEST])
                         elif x_dist != 1 or y_dist != -1:
                             print("7º - NORTH")
-                            return self.dig_map(Direction.NORTH)
+                            return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST])
                         elif x_dist != 1 or y_dist != 1:
                             print("7º - SOUTH")
-                            return self.dig_map(Direction.SOUTH)
+                            return self.dig_map(Direction.SOUTH, [Direction.WEST])
                         elif x_dist != 1 or y_dist != 0:
                             print("7º - WEST")
                             return self.dig_map(Direction.WEST)
                     print("8º - EAST")
-                    return self.dig_map(Direction.EAST)
+                    return self.dig_map(Direction.EAST, [Direction.SOUTH, Direction.NORTH, Direction.WEST])
                 elif x_dist < 0:
                     if dist <= 3:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) \
@@ -380,17 +385,17 @@ class Agent:
                             return "A"
                         if (x_dist != -1 or y_dist not in (-1, 0, 1)) and (x_dist != -2 or y_dist != 0):
                             print("9º - WEST")
-                            return self.dig_map(Direction.WEST)
+                            return self.dig_map(Direction.WEST, [Direction.NORTH, Direction.SOUTH, Direction.EAST])
                         elif x_dist != -1 or y_dist != -1:
                             print("9º - NORTH")
-                            return self.dig_map(Direction.NORTH)
+                            return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.EAST])
                         elif x_dist != -1 or y_dist != 1:
                             print("9º - SOUTH")
-                            return self.dig_map(Direction.SOUTH)
+                            return self.dig_map(Direction.SOUTH, [Direction.EAST])
                         print("9º - EAST")
                         return self.dig_map(Direction.EAST)
                     print("10º - WEST")
-                    return self.dig_map(Direction.WEST)
+                    return self.dig_map(Direction.WEST, [Direction.NORTH, Direction.SOUTH, Direction.EAST])
             else:
                 if y_dist > 0:
                     if dist <= 3:
@@ -401,17 +406,17 @@ class Agent:
                             return "A"
                         if (y_dist != 1 or x_dist not in (-1, 0, 1)) and (y_dist != 2 or x_dist != 0):
                             print("11º - SOUTH")
-                            return self.dig_map(Direction.SOUTH)
+                            return self.dig_map(Direction.SOUTH, [Direction.EAST, Direction.WEST, Direction.NORTH])
                         elif y_dist != 1 or x_dist != 1:
                             print("11º - EAST")
-                            return self.dig_map(Direction.EAST)
+                            return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH])
                         elif y_dist != 1 or x_dist != -1:
                             print("11º - WEST")
-                            return self.dig_map(Direction.WEST)
+                            return self.dig_map(Direction.WEST, [Direction.NORTH])
                         print("11º - NORTH")
                         return self.dig_map(Direction.NORTH)
                     print("12º - SOUTH")
-                    return self.dig_map(Direction.SOUTH)
+                    return self.dig_map(Direction.SOUTH, [Direction.EAST, Direction.WEST, Direction.NORTH])
                 elif y_dist < 0:
                     if dist <= 3:
                         if self.is_digdug_in_front_of_enemy(chosen_enemy) \
@@ -431,7 +436,7 @@ class Agent:
                         print("13º - SOUTH")
                         return self.dig_map(Direction.SOUTH)
                     print("14º - NORTH")
-                    return self.dig_map(Direction.NORTH)
+                    return self.dig_map(Direction.NORTH, [Direction.EAST, Direction.WEST, Direction.SOUTH])
         else:
             self.map = state["map"]
             self.map_size = state["size"]
