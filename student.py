@@ -269,50 +269,30 @@ class Agent:
                     return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.EAST, Direction.WEST])
 
             # Move around the map
-            if abs(x_dist) >= abs(y_dist):
-                if x_dist > 0:
-                    if dist <= 3:
-                        if self.is_digdug_in_front_of_enemy(chosen_enemy) \
-                                and self.is_map_digged_to_direction(Direction.EAST) \
-                                and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.checkDistAllEnemies(self.pos):
-                            return "A"
-                        else:
-                            return self.dig_map(Direction.EAST, [Direction.NORTH, Direction.SOUTH, Direction.WEST])
-                    return self.dig_map(Direction.EAST, [Direction.SOUTH, Direction.NORTH, Direction.WEST])
-                elif x_dist < 0:
-                    if dist <= 3:
-                        if self.is_digdug_in_front_of_enemy(chosen_enemy) \
-                                and self.is_map_digged_to_direction(Direction.WEST) \
-                                and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.checkDistAllEnemies(self.pos):
-                            return "A"
-                        else:
-                            return self.dig_map(Direction.WEST, [Direction.NORTH, Direction.SOUTH, Direction.EAST])
-                    return self.dig_map(Direction.WEST, [Direction.NORTH, Direction.SOUTH, Direction.EAST])
-            else:
-                if y_dist > 0:
-                    if dist <= 3:
-                        if self.is_digdug_in_front_of_enemy(chosen_enemy) \
-                                and self.is_map_digged_to_direction(Direction.SOUTH) \
-                                and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.checkDistAllEnemies(self.pos):
-                            return "A"
-                        else:
-                            return self.dig_map(Direction.SOUTH, [Direction.EAST, Direction.WEST, Direction.NORTH])
-                    return self.dig_map(Direction.SOUTH, [Direction.EAST, Direction.WEST, Direction.NORTH])
-                elif y_dist < 0:
-                    if dist <= 3:
-                        if self.is_digdug_in_front_of_enemy(chosen_enemy) \
-                                and self.is_map_digged_to_direction(Direction.NORTH) \
-                                and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.checkDistAllEnemies(self.pos):
-                            return "A"
-                        else:
-                            return self.dig_map(Direction.NORTH, [Direction.EAST, Direction.WEST, Direction.SOUTH])
-                    return self.dig_map(Direction.NORTH, [Direction.EAST, Direction.WEST, Direction.SOUTH])
+            def direction_mapping() -> tuple:
+                if abs(x_dist) >= abs(y_dist):
+                    if x_dist > 0:
+                        return Direction.EAST, [Direction.SOUTH, Direction.NORTH, Direction.WEST]
+                    return Direction.WEST, [Direction.NORTH, Direction.SOUTH, Direction.EAST]
+                else:
+                    if y_dist > 0:
+                        return Direction.SOUTH, [Direction.EAST, Direction.WEST, Direction.NORTH]
+                    return Direction.NORTH, [Direction.EAST, Direction.WEST, Direction.SOUTH]
+
+            chosen_dir, fallback = direction_mapping()
+
+            if dist <= 3:
+                if self.is_digdug_in_front_of_enemy(chosen_enemy) \
+                        and self.is_map_digged_to_direction(chosen_dir) \
+                        and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.checkDistAllEnemies(self.pos):
+                    return "A"
+            return self.dig_map(chosen_dir, fallback)
                 
         else:
             self.map = state["map"]
             self.map_size = state["size"]
 
-        return " "
+        return ""
 
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
