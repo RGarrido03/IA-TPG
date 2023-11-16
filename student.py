@@ -143,7 +143,7 @@ class Agent:
 
         if (0 <= x < self.map_size[0] and 0 <= y < self.map_size[1]
                 and not self.will_enemy_fire_at_digdug([x, y])
-                and [x, y] not in self.pos_rocks) and not self.checkDistAllEnemies([x, y]):
+                and [x, y] not in self.pos_rocks) and not self.check_dist_all_enemies([x, y]):
             self.map[x][y] = 0
 
             print("Real move after checks: ", direction.name)
@@ -151,23 +151,23 @@ class Agent:
                 
         return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
     
-    def checkDistAllEnemies(self, digDugPos) -> bool:
-        tooClose = False
-        x = digDugPos[0]
-        y = digDugPos[1]
+    def check_dist_all_enemies(self, digdug_pos: list[int]) -> bool:
+        too_close = False
+        x, y = digdug_pos
         for enemy in self.enemies:
+            x_dist: int = enemy["pos"][0] - x
+            y_dist: int = enemy["pos"][1] - y
             if enemy["name"] == "Fygar" and self.map[x][y] == 1:
-                tooClose = False
-            elif Direction.NORTH and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y)):
-                tooClose = True
-            elif Direction.SOUTH and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
-                tooClose = True
-            elif Direction.EAST and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
-                tooClose = True
-            elif Direction.WEST and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
-                tooClose = True
-
-        return tooClose
+                too_close = False
+            elif Direction.NORTH and (x_dist, y_dist) in [(0, 0), (-1, 0), (1, 0), (0, -1)]:
+                too_close = True
+            elif Direction.SOUTH and (x_dist, y_dist) in [(0, 0), (-1, 0), (1, 0), (0, 1)]:
+                too_close = True
+            elif Direction.EAST and (x_dist, y_dist) in [(0, 0), (1, 0), (0, -1), (0, 1)]:
+                too_close = True
+            elif Direction.WEST and (x_dist, y_dist) in [(0, 0), (-1, 0), (0, -1), (0, 1)]:
+                too_close = True
+        return too_close
 
     def get_lower_cost_enemy(self) -> dict:
         connections = []
@@ -221,7 +221,6 @@ class Agent:
                     digdug_new_pos[0] in (enemy["pos"][0] - 1, enemy["pos"][0] - 2, enemy["pos"][0] - 3, enemy["pos"][0] - 4):
                 return True
 
-
     def get_key(self, state: dict) -> str:
         if "digdug" in state:
             self.ts: float = state["ts"]
@@ -249,7 +248,7 @@ class Agent:
             # Change the direction when it bugs and just follows the enemy
             if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
                 if x_dist == 1:
-                    if y_dist in (0, -1, 1):
+                    if y_dist in (-1, 0, 1):
                         return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
                     return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
 
@@ -284,7 +283,8 @@ class Agent:
             if dist <= 3:
                 if self.is_digdug_in_front_of_enemy(chosen_enemy) \
                         and self.is_map_digged_to_direction(chosen_dir) \
-                        and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.checkDistAllEnemies(self.pos):
+                        and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) \
+                        and not self.check_dist_all_enemies(self.pos):
                     return "A"
             return self.dig_map(chosen_dir, fallback)
                 
