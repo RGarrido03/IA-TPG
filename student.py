@@ -197,22 +197,29 @@ class Agent:
         return chosen_enemy
 
     def will_enemy_fire_at_digdug(self, digdug_new_pos: list[int]) -> bool:
-        direction_mapping: dict = {
-            Direction.NORTH: ((0,), range(1, 5)),
-            Direction.SOUTH: ((0,), range(-4, 0)),
-            Direction.EAST: (range(-4, 0), (0,)),
-            Direction.WEST: (range(1, 5), (0,))
-        }
-
         for enemy in self.enemies:
             if "name" not in enemy or enemy["name"] != "Fygar":
                 return False
 
-            x_dist = enemy["pos"][0] - digdug_new_pos[0]
-            y_dist = enemy["pos"][1] - digdug_new_pos[1]
+            if enemy["dir"] == Direction.NORTH and \
+                    digdug_new_pos[0] == enemy["pos"][0] and \
+                    digdug_new_pos[1] in (enemy["pos"][1] - 1, enemy["pos"][1] - 2, enemy["pos"][1] - 3, enemy["pos"][1] - 4):
+                return True
 
-            dx, dy = direction_mapping[enemy["dir"]]
-            return x_dist in dx and y_dist in dy
+            if enemy["dir"] == Direction.SOUTH and \
+                    digdug_new_pos[0] == enemy["pos"][0] and \
+                    digdug_new_pos[1] in (enemy["pos"][1] + 1, enemy["pos"][1] + 2, enemy["pos"][1] + 3, enemy["pos"][1] + 4):
+                return True
+
+            if enemy["dir"] == Direction.EAST and \
+                    digdug_new_pos[1] == enemy["pos"][1] and \
+                    digdug_new_pos[0] in (enemy["pos"][0] + 1, enemy["pos"][0] + 2, enemy["pos"][0] + 3, enemy["pos"][0] + 4):
+                return True
+
+            if enemy["dir"] == Direction.WEST and \
+                    digdug_new_pos[1] == enemy["pos"][1] and \
+                    digdug_new_pos[0] in (enemy["pos"][0] - 1, enemy["pos"][0] - 2, enemy["pos"][0] - 3, enemy["pos"][0] - 4):
+                return True
 
     def get_key(self, state: dict) -> str:
         if "digdug" in state:
