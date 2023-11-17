@@ -68,7 +68,7 @@ class Agent:
         self.map: list = []
         self.map_size: list = []
         self.pos_rocks: list = []
-        self.previous_dir: list = []
+        self.previous_positions: list[list[int]] = []
 
     def get_digdug_direction(self) -> Direction:
         # When the game/level starts, it has no last position
@@ -220,6 +220,10 @@ class Agent:
                     digdug_new_pos[1] == enemy["pos"][1] and \
                     digdug_new_pos[0] in (enemy["pos"][0] - 1, enemy["pos"][0] - 2, enemy["pos"][0] - 3, enemy["pos"][0] - 4):
                 return True
+            
+    def is_in_loop(self) -> bool:
+        return self.previous_positions.count(self.pos) > 5  # adjust this value as needed
+
 
 
     def get_key(self, state: dict) -> str:
@@ -229,6 +233,7 @@ class Agent:
             self.pos: list[int] = state["digdug"]
             self.dir: Direction = self.get_digdug_direction()
             self.enemies: list[dict] = state["enemies"]
+            self.previous_positions.append(self.pos.copy())
             if 'rocks' in state:
                 self.pos_rocks: list = [rock["pos"] for rock in state["rocks"]]
 
@@ -245,6 +250,25 @@ class Agent:
             x_dist: int = chosen_enemy["x_dist"]
             y_dist: int = chosen_enemy["y_dist"]
             dist: int = chosen_enemy["dist"]
+
+            if self.is_in_loop():
+                print("Loop detected")
+                if x_dist == 1:
+                    if y_dist in (0, -1, 1):
+                        return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
+                    return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
+                elif x_dist == -1:
+                    if y_dist in (-1, 0, 1):
+                        return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
+                    return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.EAST, Direction.WEST])
+                elif y_dist == 1:
+                    if x_dist in (-1, 0, 1):
+                        return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
+                    return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
+                elif y_dist == -1:
+                    if x_dist in (-1, 0, 1):
+                        return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
+                    return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
             
             # Change the direction when it bugs and just follows the enemy
             if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
@@ -285,6 +309,7 @@ class Agent:
                 if self.is_digdug_in_front_of_enemy(chosen_enemy) \
                         and self.is_map_digged_to_direction(chosen_dir) \
                         and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.checkDistAllEnemies(self.pos):
+                    self.previous_positions = []
                     return "A"
             return self.dig_map(chosen_dir, fallback)
                 
