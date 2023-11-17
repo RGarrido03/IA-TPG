@@ -103,6 +103,7 @@ class Game:
         self.map = Map(size=size, empty=True)
         self._enemies = []
         self._rope = Rope(self.map)
+        self.respawn = False
 
     @property
     def level(self):
@@ -182,10 +183,11 @@ class Game:
                     )
                     if self._rope.hit(self._enemies):
                         logger.debug(
-                            "[step=%s] Enemy hit with rope(%s) - enemies: %s",
+                            "[step=%s] Enemy hit with rope(%s) - enemies: %s - digdug: %s",
                             self._step,
                             self._rope.to_dict(),
                             self._enemies,
+                            self._digdug,
                         )
             else:
                 # if digdug moves we let go of the rope
@@ -224,11 +226,7 @@ class Game:
         )
         if self._digdug.lives > 0:
             logger.debug("RESPAWN")
-            self._digdug.respawn()
-            for e in self._enemies:
-                if math.dist(self._digdug.pos, e.pos) < VITAL_SPACE:
-                    logger.debug("respawn camper")
-                    e.respawn()
+            self.respawn = True
         else:
             self.stop()
 
@@ -266,6 +264,14 @@ class Game:
         if not self._running:
             logger.info("Waiting for player 1")
             return
+
+        if self.respawn:
+            self._digdug.respawn()
+            for e in self._enemies:
+                if math.dist(self._digdug.pos, e.pos) < VITAL_SPACE:
+                    logger.debug("respawn camper")
+                    e.respawn()
+            self.respawn = False
 
         self._step += 1
         if self._step == self._timeout:
