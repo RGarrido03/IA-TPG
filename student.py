@@ -34,21 +34,6 @@ class PointsGraph(SearchDomain):
         if P1 == point:
             return P2
         
-    def cost(self, point, action) -> int:
-        (A1, A2) = action
-
-        if A1 != point:
-            return None
-
-        for P1, P2, C in self.connections:
-            if (P1, P2) in [(A1, A2), (A2, A1)]:
-                # Se o caminho já foi escavado, diminui o custo
-                if self.map[P1][P2] == 0:
-                    print("CUSTO: ", C / 2)
-                    return C / 2
-                else:
-                    return C
-
     def heuristic(self, point, goal_point) -> float:
         x1, y1 = self.coordinates[point]
         x2, y2 = self.coordinates[goal_point]
@@ -69,7 +54,7 @@ class PointsGraph(SearchDomain):
     def heuristic(self, point, goal_point) -> float:
         x1, y1 = self.coordinates[point]
         x2, y2 = self.coordinates[goal_point]
-        return (x2 - x1) + (y2 - y1)
+        return abs(x2 - x1) + abs(y2 - y1)
 
     def satisfies(self, point, goal_point) -> bool:
         return goal_point == point
@@ -217,9 +202,7 @@ class Agent:
 
     def will_enemy_fire_at_digdug(self, digdug_new_pos: list[int]) -> bool:
         for enemy in self.enemies:
-            if "name" not in enemy or enemy["name"] != "Fygar":
-                continue
-            else:
+            if "name" in enemy and enemy["name"] == "Fygar":
                 if enemy["dir"] == Direction.NORTH and \
                         digdug_new_pos[0] == enemy["pos"][0] and \
                         digdug_new_pos[1] in (enemy["pos"][1] - 1, enemy["pos"][1] - 2, enemy["pos"][1] - 3, enemy["pos"][1] - 4):
@@ -239,10 +222,11 @@ class Agent:
                         digdug_new_pos[1] == enemy["pos"][1] and \
                         digdug_new_pos[0] in (enemy["pos"][0] - 1, enemy["pos"][0] - 2, enemy["pos"][0] - 3, enemy["pos"][0] - 4):
                     return True
+                
         return False
             
     def is_in_loop(self) -> bool:
-        return self.previous_positions.count(self.pos) > 3
+        return self.previous_positions.count(self.pos) > 5
 
 
 
@@ -272,25 +256,8 @@ class Agent:
             y_dist: int = chosen_enemy["y_dist"]
             dist: int = chosen_enemy["dist"]
 
-            if self.is_in_loop():
-                self.previous_positions = []
-                if x_dist == 1:
-                    if y_dist in (0, -1, 1):
-                        return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
-                    return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
-                elif x_dist == -1:
-                    if y_dist in (-1, 0, 1):
-                        return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
-                    return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.EAST, Direction.WEST])
-                elif y_dist == 1:
-                    if x_dist in (-1, 0, 1):
-                        return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
-                    return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
-                elif y_dist == -1:
-                    if x_dist in (-1, 0, 1):
-                        return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
-                    return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
-            
+           
+                
             # Change the direction when it bugs and just follows the enemy
             if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
                 if x_dist == 1:
@@ -312,6 +279,17 @@ class Agent:
                     if x_dist in (-1, 0, 1):
                         return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
                     return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.EAST, Direction.WEST])
+                
+            if self.is_in_loop():
+                self.previous_positions = []
+                if self.dir == Direction.EAST:
+                    return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
+                elif self.dir == Direction.WEST:
+                    return self.dig_map(Direction.WEST, [Direction.EAST, Direction.NORTH, Direction.SOUTH])
+                elif self.dir == Direction.NORTH:
+                    return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
+                elif self.dir == Direction.SOUTH:   
+                    return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.WEST, Direction.EAST])
 
             # Move around the map
             def direction_mapping() -> tuple:
@@ -330,6 +308,7 @@ class Agent:
                 if self.is_digdug_in_front_of_enemy(chosen_enemy) \
                         and self.is_map_digged_to_direction(chosen_dir) \
                         and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.checkDistAllEnemies(self.pos):
+                    self.previous_positions = []
                     return "A"
             return self.dig_map(chosen_dir, fallback)
                 
