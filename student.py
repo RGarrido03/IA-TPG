@@ -14,9 +14,11 @@ from consts import *
 
 
 class PointsGraph(SearchDomain):
-    def __init__(self, connections, coordinates):
+    def __init__(self, connections, coordinates, map):
         self.connections = connections
         self.coordinates = coordinates
+        self.map = map
+        
 
     def actions(self, point) -> list:
         actlist = []
@@ -31,6 +33,28 @@ class PointsGraph(SearchDomain):
         (P1, P2) = action
         if P1 == point:
             return P2
+        
+    def cost(self, point, action) -> int:
+        (A1, A2) = action
+
+        if A1 != point:
+            return None
+
+        for P1, P2, C in self.connections:
+            if (P1, P2) in [(A1, A2), (A2, A1)]:
+                # Se o caminho já foi escavado, diminui o custo
+                if self.map[P1][P2] == 0:
+                    print("CUSTO: ", C / 2)
+                    return C / 2
+                else:
+                    return C
+
+    def heuristic(self, point, goal_point) -> float:
+        x1, y1 = self.coordinates[point]
+        x2, y2 = self.coordinates[goal_point]
+        # Use a distância de Manhattan como heurística
+        return abs(x2 - x1) + abs(y2 - y1)
+
 
     def cost(self, point, action) -> int | None:
         (A1, A2) = action
@@ -58,17 +82,11 @@ class Agent:
         self.last_pos: list[int] = []
         self.dir: Direction = Direction.EAST
         self.enemies: list[dict] = []
-        self.level: int = 1
-        self.lives: int = 3
-        self.player: str = ""
-        self.score: int = 0
-        self.step: int = 0
-        self.timeout: int = 0
         self.ts: float = 0.0
         self.map: list = []
         self.map_size: list = []
         self.pos_rocks: list = []
-        self.previous_dir: list = []
+        self.previous_positions: list[list[int]] = []
 
     def get_digdug_direction(self) -> Direction:
         # When the game/level starts, it has no last position
@@ -156,7 +174,7 @@ class Agent:
         x = digDugPos[0]
         y = digDugPos[1]
         for enemy in self.enemies:
-            if enemy["name"] == "Fygar" and self.map[x][y] == 1:
+            if enemy["name"] == "Fygar" and self.map[x][y] == 1 and not self.will_enemy_fire_at_digdug([x, y]):
                 tooClose = False
             elif Direction.NORTH and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y)):
                 tooClose = True
@@ -178,48 +196,54 @@ class Agent:
             coordinates[enemy["id"]] = tuple(enemy["pos"])
         coordinates["digdug"] = self.pos
 
-        map_points = PointsGraph(connections, coordinates)
+        map_points = PointsGraph(connections, coordinates, self.map)
 
         chosen_enemy = {"pos": [0, 0], "cost": float("inf")}
 
         for enemy in self.enemies:
-            p = SearchProblem(map_points, 'digdug', enemy["id"])
-            t = SearchTree(p, 'a*')
-            t.search()
+            if "traverse" not in enemy or len(self.enemies) == 1:
+                p = SearchProblem(map_points, 'digdug', enemy["id"])
+                t = SearchTree(p, 'a*')
+                t.search()
 
-            enemy["x_dist"]: int = enemy["pos"][0] - self.pos[0]
-            enemy["y_dist"]: int = enemy["pos"][1] - self.pos[1]
-            enemy["dist"]: int = abs(enemy["x_dist"]) + abs(enemy["y_dist"])
-            enemy["cost"] = t.cost
+                enemy["x_dist"]: int = enemy["pos"][0] - self.pos[0]
+                enemy["y_dist"]: int = enemy["pos"][1] - self.pos[1]
+                enemy["dist"]: int = abs(enemy["x_dist"]) + abs(enemy["y_dist"])
+                enemy["cost"] = t.cost
 
-            if enemy["cost"] < chosen_enemy["cost"]:
-                chosen_enemy = enemy
+                if enemy["cost"] < chosen_enemy["cost"]:
+                    chosen_enemy = enemy
         return chosen_enemy
 
     def will_enemy_fire_at_digdug(self, digdug_new_pos: list[int]) -> bool:
         for enemy in self.enemies:
             if "name" not in enemy or enemy["name"] != "Fygar":
-                return False
+                continue
+            else:
+                if enemy["dir"] == Direction.NORTH and \
+                        digdug_new_pos[0] == enemy["pos"][0] and \
+                        digdug_new_pos[1] in (enemy["pos"][1] - 1, enemy["pos"][1] - 2, enemy["pos"][1] - 3, enemy["pos"][1] - 4):
+                    return True
 
-            if enemy["dir"] == Direction.NORTH and \
-                    digdug_new_pos[0] == enemy["pos"][0] and \
-                    digdug_new_pos[1] in (enemy["pos"][1] - 1, enemy["pos"][1] - 2, enemy["pos"][1] - 3, enemy["pos"][1] - 4):
-                return True
+                if enemy["dir"] == Direction.SOUTH and \
+                        digdug_new_pos[0] == enemy["pos"][0] and \
+                        digdug_new_pos[1] in (enemy["pos"][1] + 1, enemy["pos"][1] + 2, enemy["pos"][1] + 3, enemy["pos"][1] + 4):
+                    return True
 
-            if enemy["dir"] == Direction.SOUTH and \
-                    digdug_new_pos[0] == enemy["pos"][0] and \
-                    digdug_new_pos[1] in (enemy["pos"][1] + 1, enemy["pos"][1] + 2, enemy["pos"][1] + 3, enemy["pos"][1] + 4):
-                return True
+                if enemy["dir"] == Direction.EAST and \
+                        digdug_new_pos[1] == enemy["pos"][1] and \
+                        digdug_new_pos[0] in (enemy["pos"][0] + 1, enemy["pos"][0] + 2, enemy["pos"][0] + 3, enemy["pos"][0] + 4):
+                    return True
 
-            if enemy["dir"] == Direction.EAST and \
-                    digdug_new_pos[1] == enemy["pos"][1] and \
-                    digdug_new_pos[0] in (enemy["pos"][0] + 1, enemy["pos"][0] + 2, enemy["pos"][0] + 3, enemy["pos"][0] + 4):
-                return True
+                if enemy["dir"] == Direction.WEST and \
+                        digdug_new_pos[1] == enemy["pos"][1] and \
+                        digdug_new_pos[0] in (enemy["pos"][0] - 1, enemy["pos"][0] - 2, enemy["pos"][0] - 3, enemy["pos"][0] - 4):
+                    return True
+        return False
+            
+    def is_in_loop(self) -> bool:
+        return self.previous_positions.count(self.pos) > 3
 
-            if enemy["dir"] == Direction.WEST and \
-                    digdug_new_pos[1] == enemy["pos"][1] and \
-                    digdug_new_pos[0] in (enemy["pos"][0] - 1, enemy["pos"][0] - 2, enemy["pos"][0] - 3, enemy["pos"][0] - 4):
-                return True
 
 
     def get_key(self, state: dict) -> str:
@@ -229,6 +253,7 @@ class Agent:
             self.pos: list[int] = state["digdug"]
             self.dir: Direction = self.get_digdug_direction()
             self.enemies: list[dict] = state["enemies"]
+            self.previous_positions.append(self.pos)
             if 'rocks' in state:
                 self.pos_rocks: list = [rock["pos"] for rock in state["rocks"]]
 
@@ -238,6 +263,7 @@ class Agent:
             print("\npos digdug: ", self.pos)
             print("\nenemies: " + str(self.enemies))
             print("\nchosen enemy:", chosen_enemy)
+            print("\nprevious positions: ", self.previous_positions)
 
             if "dist" not in chosen_enemy:
                 return ""
@@ -245,6 +271,25 @@ class Agent:
             x_dist: int = chosen_enemy["x_dist"]
             y_dist: int = chosen_enemy["y_dist"]
             dist: int = chosen_enemy["dist"]
+
+            if self.is_in_loop():
+                self.previous_positions = []
+                if x_dist == 1:
+                    if y_dist in (0, -1, 1):
+                        return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
+                    return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
+                elif x_dist == -1:
+                    if y_dist in (-1, 0, 1):
+                        return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
+                    return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.EAST, Direction.WEST])
+                elif y_dist == 1:
+                    if x_dist in (-1, 0, 1):
+                        return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
+                    return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
+                elif y_dist == -1:
+                    if x_dist in (-1, 0, 1):
+                        return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
+                    return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
             
             # Change the direction when it bugs and just follows the enemy
             if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
@@ -291,6 +336,7 @@ class Agent:
         else:
             self.map = state["map"]
             self.map_size = state["size"]
+            self.previous_positions = []
 
         return ""
 
