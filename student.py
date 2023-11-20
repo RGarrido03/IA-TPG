@@ -18,7 +18,6 @@ class PointsGraph(SearchDomain):
         self.connections = connections
         self.coordinates = coordinates
         self.map = map
-        
 
     def actions(self, point) -> list:
         actlist = []
@@ -33,13 +32,6 @@ class PointsGraph(SearchDomain):
         (P1, P2) = action
         if P1 == point:
             return P2
-        
-    def heuristic(self, point, goal_point) -> float:
-        x1, y1 = self.coordinates[point]
-        x2, y2 = self.coordinates[goal_point]
-        # Use a distância de Manhattan como heurística
-        return abs(x2 - x1) + abs(y2 - y1)
-
 
     def cost(self, point, action) -> int | None:
         (A1, A2) = action
@@ -228,8 +220,6 @@ class Agent:
     def is_in_loop(self) -> bool:
         return self.previous_positions.count(self.pos) > 5
 
-
-
     def get_key(self, state: dict) -> str:
         if "digdug" in state:
             self.ts: float = state["ts"]
@@ -256,8 +246,6 @@ class Agent:
             y_dist: int = chosen_enemy["y_dist"]
             dist: int = chosen_enemy["dist"]
 
-           
-                
             # Change the direction when it bugs and just follows the enemy
             if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
                 if x_dist == 1:
