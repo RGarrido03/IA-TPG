@@ -33,7 +33,7 @@ class PointsGraph(SearchDomain):
         if P1 == point:
             return P2
 
-    def cost(self, point, action) -> int | None:
+    def cost(self, point, action):
         (A1, A2) = action
 
         if A1 != point:
@@ -119,7 +119,7 @@ class Agent:
             return True
         return False
 
-    def dig_map(self, direction: Direction | None, fallback=None) -> str:
+    def dig_map(self, direction, fallback=None) -> str:
         if direction is None:
             return ""
         if fallback is None:
