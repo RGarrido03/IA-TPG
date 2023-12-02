@@ -15,10 +15,9 @@ from typing import Union
 
 
 class PointsGraph(SearchDomain):
-    def __init__(self, connections, coordinates, map):
+    def __init__(self, connections, coordinates):
         self.connections = connections
         self.coordinates = coordinates
-        self.map = map
 
     def actions(self, point) -> list:
         actlist = []
@@ -62,7 +61,7 @@ class Agent:
         self.enemies: list[dict] = []
         self.ts: float = 0.0
         self.map: list = []
-        self.map_size: list = []
+        self.map_size: list[int, int] = []
         self.pos_rocks: list = []
         self.previous_positions: list[list[int]] = []
 
@@ -165,6 +164,24 @@ class Agent:
 
         return too_close
 
+    def generate_connections(self) -> list:
+        connections = []
+        size_x: int
+        size_y: int
+        size_x, size_y = self.map_size
+        for x in range(size_x):
+            for y in range(size_y):
+                # Check the 4 adjacent points: up, down, left, right
+                if x > 0:
+                    connections.append(((x, y), (x-1, y), 1 if self.map[x-1][y] == 0 else 5))
+                if x < size_x - 1:
+                    connections.append(((x, y), (x+1, y), 1 if self.map[x+1][y] == 0 else 5))
+                if y > 0:
+                    connections.append(((x, y), (x, y-1), 1 if self.map[x][y-1] == 0 else 5))
+                if y < size_x - 1:
+                    connections.append(((x, y), (x, y+1), 1 if self.map[x][y+1] == 0 else 5))
+        return connections
+
     def get_lower_cost_enemy(self) -> dict:
         connections = []
         coordinates = {}
@@ -174,7 +191,7 @@ class Agent:
             coordinates[enemy["id"]] = tuple(enemy["pos"])
         coordinates["digdug"] = self.pos
 
-        map_points = PointsGraph(connections, coordinates, self.map)
+        map_points = PointsGraph(connections, coordinates)
 
         chosen_enemy = {"pos": [0, 0], "cost": float("inf")}
 
@@ -302,8 +319,8 @@ class Agent:
             return self.dig_map(chosen_dir, fallback)
                 
         else:
-            self.map = state["map"]
-            self.map_size = state["size"]
+            self.map: list[list[int]] = state["map"]
+            self.map_size: list[int, int] = state["size"]
             self.previous_positions = []
 
         return ""
