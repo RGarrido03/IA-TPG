@@ -119,7 +119,7 @@ class Agent:
             return True
         return False
 
-    def dig_map(self, direction: Union[Direction, None], fallback=None) -> str:
+    def dig_map(self, direction: Union[Direction, None], enemy,fallback=None) -> str:
         if direction is None:
             return ""
         if fallback is None:
@@ -135,16 +135,24 @@ class Agent:
         dx, dy, key = direction_mapping[direction]
         x = self.pos[0] + dx
         y = self.pos[1] + dy
-
-        if (0 <= x < self.map_size[0] and 0 <= y < self.map_size[1]
+        
+        print("path to enemy: ", self.is_dug_path_to_enemy(enemy))
+        if self.is_dug_path_to_enemy(enemy) and self.map[x][y] == 0:
+            if (0 <= x < self.map_size[0] and 0 <= y < self.map_size[1]
                 and not self.will_enemy_fire_at_digdug([x, y])
                 and [x, y] not in self.pos_rocks) and not self.check_dist_all_enemies([x, y]):
-            self.map[x][y] = 0
-
-            print("Real move after checks: ", direction.name)
-            return key
+                    
+                print("Real move after checks: ", direction.name)
+                return key
+        else:
+            if (0 <= x < self.map_size[0] and 0 <= y < self.map_size[1]
+                and not self.will_enemy_fire_at_digdug([x, y])
+                and [x, y] not in self.pos_rocks) and not self.check_dist_all_enemies([x, y]):
+                    
+                print("Real move after checks: ", direction.name)
+                return key
                 
-        return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
+        return self.dig_map(fallback[0] if len(fallback) > 0 else None, enemy,fallback[1:])
     
     def check_dist_all_enemies(self, digdug_pos) -> bool:
         too_close = False
@@ -238,6 +246,22 @@ class Agent:
     def is_in_loop(self) -> bool:
         return self.previous_positions.count(self.pos) > 5
 
+    def is_dug_path_to_enemy(self, enemy):
+        visited = set()
+        stack = [tuple(self.pos)]
+        while stack:
+            node = stack.pop()
+            if node not in visited:
+                visited.add(node)
+                if node == tuple(enemy["pos"]):
+                    return True
+                for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
+                    x, y = node[0] + dx, node[1] + dy
+                    if (0 <= x < self.map_size[0] and 0 <= y < self.map_size[1] and self.map[x][y] == 0):
+                        stack.append((x, y))
+        return False
+
+
     def get_key(self, state: dict) -> str:
         if "digdug" in state:
             self.ts: float = state["ts"]
@@ -268,47 +292,47 @@ class Agent:
             if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
                 if x_dist == 1:
                     if y_dist in (0, -1, 1):
-                        return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
-                    return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
+                        return self.dig_map(Direction.NORTH,chosen_enemy ,[Direction.SOUTH, Direction.WEST, Direction.EAST])
+                    return self.dig_map(Direction.EAST, chosen_enemy , [Direction.WEST, Direction.NORTH, Direction.SOUTH])
 
                 elif x_dist == -1:
                     if y_dist in (-1, 0, 1):
-                        return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
-                    return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
+                        return self.dig_map(Direction.SOUTH, chosen_enemy, [Direction.NORTH, Direction.EAST, Direction.WEST])
+                    return self.dig_map(Direction.WEST, chosen_enemy, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
 
                 elif y_dist == 1:
                     if x_dist in (-1, 0, 1):
-                        return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
-                    return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
+                        return self.dig_map(Direction.EAST, chosen_enemy ,[Direction.WEST, Direction.NORTH, Direction.SOUTH])
+                    return self.dig_map(Direction.SOUTH,chosen_enemy, [Direction.NORTH, Direction.EAST, Direction.WEST])
 
                 elif y_dist == -1:
                     if x_dist in (-1, 0, 1):
-                        return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
-                    return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.EAST, Direction.WEST])
+                        return self.dig_map(Direction.WEST, chosen_enemy,[Direction.EAST, Direction.SOUTH, Direction.NORTH])
+                    return self.dig_map(Direction.NORTH, chosen_enemy,[Direction.SOUTH, Direction.EAST, Direction.WEST])
                 
             if self.is_in_loop():
                 self.previous_positions = []
                 if self.dir == Direction.EAST:
-                    return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
+                    return self.dig_map(Direction.EAST, chosen_enemy,[Direction.WEST, Direction.NORTH, Direction.SOUTH])
                 elif self.dir == Direction.WEST:
-                    return self.dig_map(Direction.WEST, [Direction.EAST, Direction.NORTH, Direction.SOUTH])
+                    return self.dig_map(Direction.WEST, chosen_enemy,[Direction.EAST, Direction.NORTH, Direction.SOUTH])
                 elif self.dir == Direction.NORTH:
-                    return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
+                    return self.dig_map(Direction.NORTH, chosen_enemy,[Direction.SOUTH, Direction.WEST, Direction.EAST])
                 elif self.dir == Direction.SOUTH:   
-                    return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.WEST, Direction.EAST])
+                    return self.dig_map(Direction.SOUTH, chosen_enemy,[Direction.NORTH, Direction.WEST, Direction.EAST])
 
             # Move around the map
             def direction_mapping() -> tuple:
                 if abs(x_dist) >= abs(y_dist):
                     if x_dist > 0:
-                        return Direction.EAST, [Direction.SOUTH, Direction.NORTH, Direction.WEST]
-                    return Direction.WEST, [Direction.NORTH, Direction.SOUTH, Direction.EAST]
+                        return Direction.EAST,chosen_enemy ,[Direction.SOUTH, Direction.NORTH, Direction.WEST]
+                    return Direction.WEST, chosen_enemy ,[Direction.NORTH, Direction.SOUTH, Direction.EAST]
                 else:
                     if y_dist > 0:
-                        return Direction.SOUTH, [Direction.EAST, Direction.WEST, Direction.NORTH]
-                    return Direction.NORTH, [Direction.EAST, Direction.WEST, Direction.SOUTH]
+                        return Direction.SOUTH,chosen_enemy,[Direction.EAST, Direction.WEST, Direction.NORTH]
+                    return Direction.NORTH, chosen_enemy, [Direction.EAST, Direction.WEST, Direction.SOUTH]
 
-            chosen_dir, fallback = direction_mapping()
+            chosen_dir, chosen_enemy,fallback = direction_mapping()
 
             if dist <= 3:
                 if self.is_digdug_in_front_of_enemy(chosen_enemy) \
@@ -316,7 +340,7 @@ class Agent:
                         and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.check_dist_all_enemies(self.pos):
                     self.previous_positions = []
                     return "A"
-            return self.dig_map(chosen_dir, fallback)
+            return self.dig_map(chosen_dir, chosen_enemy, fallback)
                 
         else:
             self.map: list[list[int]] = state["map"]
