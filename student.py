@@ -11,6 +11,7 @@ import math
 import game
 from tree_search import *
 from consts import *
+from typing import Union
 
 
 class PointsGraph(SearchDomain):
@@ -33,7 +34,7 @@ class PointsGraph(SearchDomain):
         if P1 == point:
             return P2
 
-    def cost(self, point, action):
+    def cost(self, point, action) -> Union[int, None]:
         (A1, A2) = action
 
         if A1 != point:
@@ -119,7 +120,7 @@ class Agent:
             return True
         return False
 
-    def dig_map(self, direction, fallback=None) -> str:
+    def dig_map(self, direction: Union[Direction, None], fallback=None) -> str:
         if direction is None:
             return ""
         if fallback is None:
