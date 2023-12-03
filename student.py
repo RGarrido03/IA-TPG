@@ -66,6 +66,11 @@ class Agent:
         self.previous_positions: list[list[int]] = []
 
     def get_digdug_direction(self) -> Direction:
+        """
+        Get DigDug position based on last and current positions.
+        :return: DigDug direction
+        :rtype: Direction
+        """
         # When the game/level starts, it has no last position
         if not self.last_pos:
             return self.dir
@@ -89,6 +94,14 @@ class Agent:
                 return self.dir
 
     def is_digdug_in_front_of_enemy(self, enemy: dict) -> bool:
+        """
+        Check if DigDug is looking at the enemy through its direction.\n
+        Useful for testing fire conditions.
+        :param enemy: Enemy to check against.
+        :type enemy: dict
+        :return: Either True or False.
+        :rtype: bool
+        """
         direction = self.dir
         if direction == Direction.EAST and self.pos[1] == enemy["pos"][1] and self.pos[0] < enemy["pos"][0]:
             return True
@@ -101,6 +114,13 @@ class Agent:
         return False
 
     def are_digdug_and_enemy_facing_each_other(self, enemy: dict) -> bool:
+        """
+        Check if DigDug and the enemy are facing each other (i.e., are in opposite directions).
+        :param enemy: Enemy to check against.
+        :type enemy: dict
+        :return: Either True or False.
+        :rtype: bool
+        """
         digdug_direction: Direction = self.dir
         enemy_direction: Direction = enemy["dir"]
 
@@ -109,6 +129,13 @@ class Agent:
         return digdug_direction == enemy_direction + 2
 
     def is_map_digged_to_direction(self, direction: Direction) -> bool:
+        """
+        Check whether the map point next to DigDug in a certain direction is digged or not.
+        :param direction: Direction to check against.
+        :type direction: Direction
+        :return: Either True or False.
+        :rtype: bool
+        """
         if direction == Direction.EAST and self.map[self.pos[0] + 1][self.pos[1]] == 0:
             return True
         if direction == Direction.WEST and self.map[self.pos[0] - 1][self.pos[1]] == 0:
@@ -119,7 +146,20 @@ class Agent:
             return True
         return False
 
-    def dig_map(self, direction: Union[Direction, None], enemy,fallback=None) -> str:
+    def dig_map(self, direction: Union[Direction, None], enemy, fallback=None) -> str:
+        """
+        Dig the map in a certain direction.\n
+        It checks multiple conditions, such as enemies, fire, map boundaries and rocks.
+        :param direction: Direction to dig.
+        :type direction: Direction
+        :param fallback: Fallback directions to dig in case the main direction is not possible.
+        :type fallback: list[Direction]
+        :param enemy: Enemy to check against.
+        :type enemy: dict
+        :return: Key to send to the server.
+        :rtype: str
+        """
+
         if direction is None:
             return ""
         if fallback is None:
@@ -155,6 +195,13 @@ class Agent:
         return self.dig_map(fallback[0] if len(fallback) > 0 else None, enemy,fallback[1:])
     
     def check_dist_all_enemies(self, digdug_pos) -> bool:
+        """
+        Check if DigDug will be too close to any enemy, based on the position passed as argument.
+        :param digdug_pos: New DigDug position.
+        :type digdug_pos: list[int]
+        :return: Either True or False.
+        :rtype: bool
+        """
         too_close = False
         x = digdug_pos[0]
         y = digdug_pos[1]
@@ -173,6 +220,12 @@ class Agent:
         return too_close
 
     def generate_connections(self) -> list:
+        """
+        Generate connections between all map points.\n
+        If the destination point isn't digged yet, the cost is 5, otherwise it's 1.
+        :return: List of connections.
+        :rtype: list
+        """
         connections = []
         size_x: int
         size_y: int
@@ -191,6 +244,13 @@ class Agent:
         return connections
 
     def get_lower_cost_enemy(self) -> dict:
+        """
+        Get the enemy with the lowest cost to DigDug.\n
+        It uses the A* algorithm to calculate the cost
+        and will be refactored to include the key decision in the tree search.
+        :return: Enemy with the lowest cost.
+        :rtype: dict
+        """
         connections = []
         coordinates = {}
         for enemy in self.enemies:
@@ -219,6 +279,13 @@ class Agent:
         return chosen_enemy
 
     def will_enemy_fire_at_digdug(self, digdug_new_pos: list[int]) -> bool:
+        """
+        Check if any enemy will fire at DigDug in the next move.
+        :param digdug_new_pos: DigDug new position.
+        :type digdug_new_pos: list[int]
+        :return: Either True or False.
+        :rtype: bool
+        """
         for enemy in self.enemies:
             if "name" in enemy and enemy["name"] == "Fygar":
                 if enemy["dir"] == Direction.NORTH and \
@@ -244,9 +311,25 @@ class Agent:
         return False
             
     def is_in_loop(self) -> bool:
+        """
+        Check if DigDug is in a loop.
+        Useful when enemies get smart.\n
+        I don't know if it's working properly.
+        :return: Either True or False.
+        :rtype: bool
+        """
         return self.previous_positions.count(self.pos) > 5
 
-    def is_dug_path_to_enemy(self, enemy):
+    def is_dug_path_to_enemy(self, enemy: dict) -> bool:
+        """
+        Check if there is an already-digged path to the enemy.
+        It uses an A* algorithm to check the path.\n
+        It looks like it's not working yet.
+        :param enemy: Enemy to check against.
+        :type enemy: dict
+        :return: Either True or False.
+        :rtype: bool
+        """
         visited = set()
         stack = [tuple(self.pos)]
         while stack:
@@ -263,6 +346,15 @@ class Agent:
 
 
     def get_key(self, state: dict) -> str:
+        """
+        Get the key to send to the server based on the current state.\n
+        It contains attack testing, map digging and enemy following.
+        Also, it checks if DigDug is in a loop, and whether DigDig is following an enemy in a bugged way or not.
+        :param state: Current state.
+        :type state: dict
+        :return: Key to send to the server (w, a, s, d, A).
+        :rtype: str
+        """
         if "digdug" in state:
             self.ts: float = state["ts"]
             self.last_pos: list[int] = self.pos
