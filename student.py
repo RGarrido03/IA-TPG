@@ -61,7 +61,7 @@ class Agent:
         self.enemies: list[dict] = []
         self.ts: float = 0.0
         self.map: list = []
-        self.map_size: list[int, int] = []
+        self.map_size: list = []
         self.pos_rocks: list = []
         self.previous_positions: list[list[int]] = []
 
@@ -136,13 +136,15 @@ class Agent:
         :return: Either True or False.
         :rtype: bool
         """
-        if direction == Direction.EAST and self.map[self.pos[0] + 1][self.pos[1]] == 0:
-            return True
-        if direction == Direction.WEST and self.map[self.pos[0] - 1][self.pos[1]] == 0:
-            return True
-        if direction == Direction.NORTH and self.map[self.pos[0]][self.pos[1] - 1] == 0:
-            return True
-        if direction == Direction.SOUTH and self.map[self.pos[0]][self.pos[1] + 1] == 0:
+        direction_mapping: dict[Direction, tuple[int, int]] = {
+            Direction.NORTH: (0, -1),
+            Direction.SOUTH: (0, 1),
+            Direction.WEST: (-1, 0),
+            Direction.EAST: (1, 0),
+        }
+        dx, dy = direction_mapping[direction]
+
+        if self.map[self.pos[0] + dx][self.pos[1] + dy] == 0:
             return True
         return False
 
@@ -175,26 +177,26 @@ class Agent:
         dx, dy, key = direction_mapping[direction]
         x = self.pos[0] + dx
         y = self.pos[1] + dy
-        
+
         print("path to enemy: ", self.is_dug_path_to_enemy(enemy))
         if self.is_dug_path_to_enemy(enemy) and self.map[x][y] == 0:
             if (0 <= x < self.map_size[0] and 0 <= y < self.map_size[1]
-                and not self.will_enemy_fire_at_digdug([x, y])
-                and [x, y] not in self.pos_rocks) and not self.check_dist_all_enemies([x, y]):
+                    and not self.will_enemy_fire_at_digdug([x, y])
+                    and [x, y] not in self.pos_rocks) and not self.check_dist_all_enemies([x, y]):
                     
                 print("Real move after checks: ", direction.name)
                 return key
         else:
             if (0 <= x < self.map_size[0] and 0 <= y < self.map_size[1]
-                and not self.will_enemy_fire_at_digdug([x, y])
-                and [x, y] not in self.pos_rocks) and not self.check_dist_all_enemies([x, y]):
+                    and not self.will_enemy_fire_at_digdug([x, y])
+                    and [x, y] not in self.pos_rocks) and not self.check_dist_all_enemies([x, y]):
                     
                 print("Real move after checks: ", direction.name)
                 return key
                 
         return self.dig_map(fallback[0] if len(fallback) > 0 else None, enemy,fallback[1:])
-    
-    def check_dist_all_enemies(self, digdug_pos) -> bool:
+
+    def check_dist_all_enemies(self, digdug_pos: list[int]) -> bool:
         """
         Check if DigDug will be too close to any enemy, based on the position passed as argument.
         :param digdug_pos: New DigDug position.
@@ -203,8 +205,7 @@ class Agent:
         :rtype: bool
         """
         too_close = False
-        x = digdug_pos[0]
-        y = digdug_pos[1]
+        x, y = digdug_pos
         for enemy in self.enemies:
             if enemy["name"] == "Fygar" and self.map[x][y] == 1 and not self.will_enemy_fire_at_digdug([x, y]):
                 too_close = False
@@ -307,7 +308,6 @@ class Agent:
                         digdug_new_pos[1] == enemy["pos"][1] and \
                         digdug_new_pos[0] in (enemy["pos"][0] - 1, enemy["pos"][0] - 2, enemy["pos"][0] - 3, enemy["pos"][0] - 4):
                     return True
-                
         return False
             
     def is_in_loop(self) -> bool:
@@ -340,10 +340,9 @@ class Agent:
                     return True
                 for dx, dy in [(0, 1), (0, -1), (1, 0), (-1, 0)]:
                     x, y = node[0] + dx, node[1] + dy
-                    if (0 <= x < self.map_size[0] and 0 <= y < self.map_size[1] and self.map[x][y] == 0):
+                    if self.map_size[0] > x >= 0 == self.map[x][y] and 0 <= y < self.map_size[1]:
                         stack.append((x, y))
         return False
-
 
     def get_key(self, state: dict) -> str:
         """
@@ -444,7 +443,6 @@ class Agent:
 
 async def agent_loop(server_address="localhost:8000", agent_name="student"):
     agent = Agent()
-    """Example client loop."""
     async with websockets.connect(f"ws://{server_address}/player") as websocket:
         # Receive information about static game properties
         await websocket.send(json.dumps({"cmd": "join", "name": agent_name}))
