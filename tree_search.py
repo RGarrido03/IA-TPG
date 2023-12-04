@@ -111,8 +111,12 @@ class SearchTree:
 
     # Find the solution
     def search(self, limit=None):
+        print("State\tCost\tHeuristic\tDepth\tPlan")
         while self.open_nodes:
             node = self.open_nodes.pop(0)
+            print(
+                f"{node.state}\t{node.cost}\t{node.heuristic}\t\t{node.depth}\t{node.plan}"
+            )
 
             if self.problem.goal_test(node.state):
                 self.solution = node
