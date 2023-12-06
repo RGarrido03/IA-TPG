@@ -112,8 +112,12 @@ class SearchTree:
     # Find the solution
     def search(self, limit=None):
         print("State\tCost\tHeuristic\tDepth\tPlan")
+        visited_nodes = set()
         while self.open_nodes:
             node = self.open_nodes.pop(0)
+            if node.state in visited_nodes: # Verifique se o nó já foi visitado
+                continue
+            visited_nodes.add(node.state)
             print(
                 f"{node.state}\t{node.cost}\t{node.heuristic}\t\t{node.depth}\t{node.plan}"
             )
@@ -128,7 +132,7 @@ class SearchTree:
 
             for a in self.problem.domain.actions(node.state):
                 newstate = self.problem.domain.result(node.state, a)
-                if not node.in_parent(newstate) and (limit is None or node.depth < limit):
+                if not node.in_parent(newstate) and (limit is None or node.depth < limit) :
                     newnode = SearchNode(newstate, node, node.depth + 1,
                                          node.cost + self.problem.domain.cost(node.state, a),
                                          self.problem.domain.heuristic(newstate, self.problem.goal), a)
