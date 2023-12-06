@@ -1,9 +1,13 @@
+"""Example client."""
 import asyncio
 import getpass
 import json
 import os
 import time
+
 import websockets
+import math
+
 import game
 from tree_search import *
 from consts import *
@@ -11,33 +15,40 @@ from typing import Union
 
 
 class PointsGraph(SearchDomain):
-    def __init__(self, connections):
+    def __init__(self, connections, coordinates):
         self.connections = connections
+        self.coordinates = coordinates
 
-    def actions(self, point: tuple) -> list[tuple]:
-        return [(P1, P2) for P1, P2, C in self.connections if P1 == point]
+    def actions(self, point) -> list:
+        actlist = []
+        for (P1, P2, C) in self.connections:
+            if P1 == point:
+                actlist += [(P1, P2)]
+            elif P2 == point:
+                actlist += [(P2, P1)]
+        return actlist
 
-    def result(self, point: tuple, action: list[tuple]) -> tuple:
-        (P1, P2) = tuple(action)
+    def result(self, point, action) -> str:
+        (P1, P2) = action
         if P1 == point:
             return P2
 
-    def cost(self, point: tuple, action: list[tuple]) -> Union[int, None]:
-        (A1, A2) = tuple(action)
+    def cost(self, point, action) -> Union[int, None]:
+        (A1, A2) = action
 
         if A1 != point:
             return None
 
         for P1, P2, C in self.connections:
-            if (P1, P2) == (A1, A2):
+            if (P1, P2) in [(A1, A2), (A2, A1)]:
                 return C
 
-    def heuristic(self, point: tuple[int, int], goal_point: tuple[int, int]) -> float:
-        x1, y1 = point
-        x2, y2 = goal_point
+    def heuristic(self, point, goal_point) -> float:
+        x1, y1 = self.coordinates[point]
+        x2, y2 = self.coordinates[goal_point]
         return abs(x2 - x1) + abs(y2 - y1)
 
-    def satisfies(self, point: tuple, goal_point: tuple) -> bool:
+    def satisfies(self, point, goal_point) -> bool:
         return goal_point == point
 
 
@@ -229,11 +240,11 @@ class Agent:
                     connections.append(((x, y), (x+1, y), 1 if self.map[x+1][y] == 0 else 5))
                 if y > 0:
                     connections.append(((x, y), (x, y-1), 1 if self.map[x][y-1] == 0 else 5))
-                if y < size_y - 1:
+                if y < size_x - 1:
                     connections.append(((x, y), (x, y+1), 1 if self.map[x][y+1] == 0 else 5))
         return connections
 
-    def get_enemies_with_costs(self) -> list[dict]:
+    def get_lower_cost_enemy(self) -> dict:
         """
         Get the enemy with the lowest cost to DigDug.\n
         It uses the A* algorithm to calculate the cost
@@ -241,18 +252,21 @@ class Agent:
         :return: Enemy with the lowest cost.
         :rtype: dict
         """
-        map_points = PointsGraph(self.generate_connections())
-        enemies_cost: list[dict] = []
-
-        count = 0
+        connections = []
+        coordinates = {}
         for enemy in self.enemies:
-            count += 1
-            print(count)
-            print(enemy)
+            connections.append(
+                ("digdug", enemy["id"], math.hypot(enemy["pos"][0] - self.pos[0], enemy["pos"][1] - self.pos[1])))
+            coordinates[enemy["id"]] = tuple(enemy["pos"])
+        coordinates["digdug"] = self.pos
+
+        map_points = PointsGraph(connections, coordinates)
+
+        chosen_enemy = {"pos": [0, 0], "cost": float("inf")}
+
+        for enemy in self.enemies:
             if "traverse" not in enemy or len(self.enemies) == 1:
-                print(tuple(self.pos))
-                print(tuple(enemy["pos"]))
-                p = SearchProblem(map_points, tuple(self.pos), tuple(enemy["pos"]))
+                p = SearchProblem(map_points, 'digdug', enemy["id"])
                 t = SearchTree(p, 'a*')
                 t.search()
 
@@ -261,10 +275,9 @@ class Agent:
                 enemy["dist"]: int = abs(enemy["x_dist"]) + abs(enemy["y_dist"])
                 enemy["cost"] = t.cost
 
-                enemies_cost.append(enemy)
-
-        enemies_cost.sort(key=lambda x: x["cost"])
-        return enemies_cost
+                if enemy["cost"] < chosen_enemy["cost"]:
+                    chosen_enemy = enemy
+        return chosen_enemy
 
     def will_enemy_fire_at_digdug(self, digdug_new_pos: list[int]) -> bool:
         """
@@ -351,8 +364,7 @@ class Agent:
             if 'rocks' in state:
                 self.pos_rocks: list = [rock["pos"] for rock in state["rocks"]]
 
-            enemies_with_costs = self.get_enemies_with_costs()
-            chosen_enemy = enemies_with_costs[0] if len(enemies_with_costs) > 0 else None
+            chosen_enemy = self.get_lower_cost_enemy()
 
             print("\n--------------------")
             print("\npos digdug: ", self.pos)
@@ -360,7 +372,7 @@ class Agent:
             print("\nchosen enemy:", chosen_enemy)
             print("\nprevious positions: ", self.previous_positions)
 
-            if chosen_enemy is None:
+            if "dist" not in chosen_enemy:
                 return ""
 
             x_dist: int = chosen_enemy["x_dist"]
