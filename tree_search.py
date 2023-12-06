@@ -47,13 +47,12 @@ class SearchProblem:
 
 # Search tree nodes
 class SearchNode:
-    def __init__(self, state, parent, depth, cost, heuristic, plan):
+    def __init__(self, state, parent, depth, cost, heuristic):
         self.state = state
         self.parent = parent
         self.depth = depth
         self.cost = cost
         self.heuristic = heuristic
-        self.plan = plan
 
     def in_parent(self, newstate):
         if self.parent is None:
@@ -75,14 +74,13 @@ class SearchTree:
     # construtor
     def __init__(self, problem, strategy='breadth'):
         self.problem = problem
-        root = SearchNode(problem.initial, None, 0, 0, problem.domain.heuristic(problem.initial, problem.goal), ())
+        root = SearchNode(problem.initial, None, 0, 0, problem.domain.heuristic(problem.initial, problem.goal))
         self.open_nodes = [root]
         self.strategy = strategy
         self.solution = None
         self.non_terminals = 0
         self.highest_cost_nodes = [root]
         self.average_depth = root.depth
-        self.plan = []
 
     @property
     def terminals(self):
@@ -106,7 +104,6 @@ class SearchTree:
             return [node.state]
         path = self.get_path(node.parent)
         path += [node.state]
-        self.plan += [node.plan]
         return path
 
     # Find the solution
@@ -127,7 +124,8 @@ class SearchTree:
                 if not node.in_parent(newstate) and (limit is None or node.depth < limit):
                     newnode = SearchNode(newstate, node, node.depth + 1,
                                          node.cost + self.problem.domain.cost(node.state, a),
-                                         self.problem.domain.heuristic(newstate, self.problem.goal), a)
+                                         self.problem.domain.heuristic(newstate, self.problem.goal))
+
                     self.average_depth += newnode.depth
 
                     if newnode.cost > self.highest_cost_nodes[0].cost:
