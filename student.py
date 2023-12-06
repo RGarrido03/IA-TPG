@@ -220,30 +220,6 @@ class Agent:
 
         return too_close
 
-    def generate_connections(self) -> list:
-        """
-        Generate connections between all map points.\n
-        If the destination point isn't digged yet, the cost is 5, otherwise it's 1.
-        :return: List of connections.
-        :rtype: list
-        """
-        connections = []
-        size_x: int
-        size_y: int
-        size_x, size_y = self.map_size
-        for x in range(size_x):
-            for y in range(size_y):
-                # Check the 4 adjacent points: up, down, left, right
-                if x > 0:
-                    connections.append(((x, y), (x-1, y), 1 if self.map[x-1][y] == 0 else 5))
-                if x < size_x - 1:
-                    connections.append(((x, y), (x+1, y), 1 if self.map[x+1][y] == 0 else 5))
-                if y > 0:
-                    connections.append(((x, y), (x, y-1), 1 if self.map[x][y-1] == 0 else 5))
-                if y < size_x - 1:
-                    connections.append(((x, y), (x, y+1), 1 if self.map[x][y+1] == 0 else 5))
-        return connections
-
     def get_lower_cost_enemy(self) -> dict:
         """
         Get the enemy with the lowest cost to DigDug.\n
