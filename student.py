@@ -233,7 +233,7 @@ class Agent:
         self.chosen_enemy = {"pos": [0, 0], "cost": float("inf")}
 
         for enemy in self.enemies:
-            if ("traverse" not in enemy or self.map[enemy['pos'][0]][enemy['pos'][1]] == 0):
+            if ("traverse" not in enemy or self.map[enemy['pos'][0]][enemy['pos'][1]] == 0) or len(self.enemies) == 1:
                 p = SearchProblem(map_points, 'digdug', enemy["id"])
                 t = SearchTree(p, 'a*')
                 t.search()
@@ -314,14 +314,19 @@ class Agent:
             
             last_enemy = self.chosen_enemy
             self.chosen_enemy = self.get_lower_cost_enemy()
+
             print("STEPS: ", self.steps)
             print("CHOSEN ENEMY: ", self.chosen_enemy)
             print("LAST ENEMY: ", last_enemy)
+
             if "id" in last_enemy and "id" in self.chosen_enemy:
                 if self.chosen_enemy['id'] == last_enemy['id'] and self.steps > 300:
                     self.previous_positions = []
                     self.steps = 0
-                    self.chosen_enemy = self.get_lower_cost_enemy(last_enemy)
+                    if len(self.enemies) > 1:
+                        self.chosen_enemy = self.get_lower_cost_enemy(last_enemy)
+                    else:
+                        self.dig_map(Direction.NORTH, [Direction.WEST, Direction.EAST, Direction.SOUTH])
                 elif self.chosen_enemy['id'] != last_enemy['id']:
                     self.steps = 0
                 else:
