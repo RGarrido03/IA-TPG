@@ -64,6 +64,8 @@ class Agent:
         self.map_size: list = []
         self.pos_rocks: list = []
         self.previous_positions: list[list[int]] = []
+        self.chosen_enemy: dict = {}
+        self.steps: int = 0
 
     def get_digdug_direction(self) -> Direction:
         """
@@ -181,6 +183,7 @@ class Agent:
             self.map[x][y] = 0
 
             print("Real move after checks: ", direction.name)
+            self.steps += 1
             return key
                 
         return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
@@ -209,7 +212,7 @@ class Agent:
 
         return too_close
 
-    def get_lower_cost_enemy(self) -> dict:
+    def get_lower_cost_enemy(self, last_enemy = None) -> dict:
         """
         Get the enemy with the lowest cost to DigDug.\n
         It uses the A* algorithm to calculate the cost
@@ -227,10 +230,10 @@ class Agent:
 
         map_points = PointsGraph(connections, coordinates)
 
-        chosen_enemy = {"pos": [0, 0], "cost": float("inf")}
+        self.chosen_enemy = {"pos": [0, 0], "cost": float("inf")}
 
         for enemy in self.enemies:
-            if "traverse" not in enemy or len(self.enemies) == 1:
+            if ("traverse" not in enemy or self.map[enemy['pos'][0]][enemy['pos'][1]] == 0):
                 p = SearchProblem(map_points, 'digdug', enemy["id"])
                 t = SearchTree(p, 'a*')
                 t.search()
@@ -240,9 +243,13 @@ class Agent:
                 enemy["dist"]: int = abs(enemy["x_dist"]) + abs(enemy["y_dist"])
                 enemy["cost"] = t.cost
 
-                if enemy["cost"] < chosen_enemy["cost"]:
-                    chosen_enemy = enemy
-        return chosen_enemy
+                if last_enemy is not None:
+                    if enemy["cost"] < self.chosen_enemy["cost"] and enemy["id"] != last_enemy["id"] :
+                        self.chosen_enemy = enemy
+                else:
+                    if enemy["cost"] < self.chosen_enemy["cost"] :
+                        self.chosen_enemy = enemy
+        return self.chosen_enemy
 
     def will_enemy_fire_at_digdug(self, digdug_new_pos: list[int]) -> bool:
         """
@@ -304,24 +311,37 @@ class Agent:
             self.previous_positions.append(self.pos)
             if 'rocks' in state:
                 self.pos_rocks: list = [rock["pos"] for rock in state["rocks"]]
-
-            chosen_enemy = self.get_lower_cost_enemy()
+            
+            last_enemy = self.chosen_enemy
+            self.chosen_enemy = self.get_lower_cost_enemy()
+            print("STEPS: ", self.steps)
+            print("CHOSEN ENEMY: ", self.chosen_enemy)
+            print("LAST ENEMY: ", last_enemy)
+            if "id" in last_enemy and "id" in self.chosen_enemy:
+                if self.chosen_enemy['id'] == last_enemy['id'] and self.steps > 300:
+                    self.previous_positions = []
+                    self.steps = 0
+                    self.chosen_enemy = self.get_lower_cost_enemy(last_enemy)
+                elif self.chosen_enemy['id'] != last_enemy['id']:
+                    self.steps = 0
+                else:
+                    print("SAME ENEMY")
 
             print("\n--------------------")
             print("\npos digdug: ", self.pos)
             print("\nenemies: " + str(self.enemies))
-            print("\nchosen enemy:", chosen_enemy)
+            print("\nchosen enemy:", self.chosen_enemy)
             print("\nprevious positions: ", self.previous_positions)
 
-            if "dist" not in chosen_enemy:
+            if "dist" not in self.chosen_enemy:
                 return ""
 
-            x_dist: int = chosen_enemy["x_dist"]
-            y_dist: int = chosen_enemy["y_dist"]
-            dist: int = chosen_enemy["dist"]
+            x_dist: int = self.chosen_enemy["x_dist"]
+            y_dist: int = self.chosen_enemy["y_dist"]
+            dist: int = self.chosen_enemy["dist"]
 
             # Change the direction when it bugs and just follows the enemy
-            if "dir" in chosen_enemy and self.dir == chosen_enemy["dir"]:
+            if "dir" in self.chosen_enemy and self.dir == self.chosen_enemy["dir"]:
                 if x_dist == 1:
                     if y_dist in (0, -1, 1):
                         return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
@@ -367,10 +387,11 @@ class Agent:
             chosen_dir, fallback = direction_mapping()
 
             if dist <= 3:
-                if self.is_digdug_in_front_of_enemy(chosen_enemy) \
+                if self.is_digdug_in_front_of_enemy(self.chosen_enemy) \
                         and self.is_map_digged_to_direction(chosen_dir) \
                         and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.check_dist_all_enemies(self.pos):
                     self.previous_positions = []
+                    self.steps +=1
                     return "A"
             return self.dig_map(chosen_dir, fallback)
                 
