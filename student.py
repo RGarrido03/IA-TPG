@@ -46,6 +46,7 @@ class PointsGraph(SearchDomain):
     def heuristic(self, point, goal_point) -> float:
         x1, y1 = self.coordinates[point]
         x2, y2 = self.coordinates[goal_point]
+
         return abs(x2 - x1) + abs(y2 - y1)
 
     def satisfies(self, point, goal_point) -> bool:
@@ -66,6 +67,7 @@ class Agent:
         self.previous_positions: list[list[int]] = []
         self.chosen_enemy: dict = {}
         self.steps: int = 0
+        self.enemies_stuck: list = []
 
     def get_digdug_direction(self) -> Direction:
         """
@@ -246,6 +248,7 @@ class Agent:
                 if last_enemy is not None:
                     if enemy["cost"] < self.chosen_enemy["cost"] and enemy["id"] != last_enemy["id"] :
                         self.chosen_enemy = enemy
+                    
                 else:
                     if enemy["cost"] < self.chosen_enemy["cost"] :
                         self.chosen_enemy = enemy
@@ -315,19 +318,32 @@ class Agent:
             last_enemy = self.chosen_enemy
             self.chosen_enemy = self.get_lower_cost_enemy()
 
+            if "dist" not in self.chosen_enemy:
+                return ""
+
             print("STEPS: ", self.steps)
             print("CHOSEN ENEMY: ", self.chosen_enemy)
             print("LAST ENEMY: ", last_enemy)
 
             if "id" in last_enemy and "id" in self.chosen_enemy:
-                if self.chosen_enemy['id'] == last_enemy['id'] and self.steps > 300:
+                
+                if self.chosen_enemy["id"] == last_enemy["id"] and self.steps > 300:
+                    print("STUCK")
+                    print("ENEMIES STUCK: ", self.chosen_enemy["id"])
                     self.previous_positions = []
                     self.steps = 0
                     if len(self.enemies) > 1:
+                        self.enemies_stuck.append(self.chosen_enemy["id"])
                         self.chosen_enemy = self.get_lower_cost_enemy(last_enemy)
+                        while self.chosen_enemy["id"] in self.enemies_stuck:
+                            self.chosen_enemy = self.get_lower_cost_enemy(self.chosen_enemy)
+                        if "id" not in self.chosen_enemy:
+                            self.chosen_enemy = self.get_lower_cost_enemy()
+                        print("NEW CHOSEN ENEMY: ", self.chosen_enemy)
                     else:
                         self.dig_map(Direction.NORTH, [Direction.WEST, Direction.EAST, Direction.SOUTH])
-                elif self.chosen_enemy['id'] != last_enemy['id']:
+                elif self.chosen_enemy["id"] != last_enemy["id"]:
+                    print("DIFFERENT ENEMY")
                     self.steps = 0
                 else:
                     print("SAME ENEMY")
@@ -338,8 +354,6 @@ class Agent:
             print("\nchosen enemy:", self.chosen_enemy)
             print("\nprevious positions: ", self.previous_positions)
 
-            if "dist" not in self.chosen_enemy:
-                return ""
 
             x_dist: int = self.chosen_enemy["x_dist"]
             y_dist: int = self.chosen_enemy["y_dist"]
