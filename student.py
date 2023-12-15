@@ -104,9 +104,7 @@ class Agent:
             Direction.EAST: lambda d0, d1, e0, e1: (d1 == e1 and d0 < e0),
         }
 
-        if direction_mapping[self.dir](self.pos[0], self.pos[1], enemy["pos"][0], enemy["pos"][1]):
-            return True
-        return False
+        return direction_mapping[self.dir](self.pos[0], self.pos[1], enemy["pos"][0], enemy["pos"][1])
 
     def are_digdug_and_enemy_facing_each_other(self, enemy: dict) -> bool:
         """
