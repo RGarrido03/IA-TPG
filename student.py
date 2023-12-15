@@ -75,27 +75,18 @@ class Agent:
         :return: DigDug direction
         :rtype: Direction
         """
+        positions_mapping = {
+            lambda: self.pos[0] == self.last_pos[0] and self.pos[1] < self.last_pos[1]: Direction.NORTH,
+            lambda: self.pos[0] == self.last_pos[0] and self.pos[1] > self.last_pos[1]: Direction.SOUTH,
+            lambda: self.pos[0] < self.last_pos[0]: Direction.WEST,
+            lambda: self.pos[0] > self.last_pos[0]: Direction.EAST
+        }
+
         # When the game/level starts, it has no last position
         if not self.last_pos:
             return self.dir
 
-        # Vertical direction
-        if self.pos[0] == self.last_pos[0]:
-            if self.pos[1] < self.last_pos[1]:
-                return Direction.NORTH
-            elif self.pos[1] > self.last_pos[1]:
-                return Direction.SOUTH
-            else:
-                return self.dir
-
-        # Horizontal direction
-        else:
-            if self.pos[0] < self.last_pos[0]:
-                return Direction.WEST
-            elif self.pos[0] > self.last_pos[0]:
-                return Direction.EAST
-            else:
-                return self.dir
+        return next((direction for condition, direction in positions_mapping.items() if condition()), self.dir)
 
     def is_digdug_in_front_of_enemy(self, enemy: dict) -> bool:
         """
@@ -310,6 +301,7 @@ class Agent:
             self.last_pos: list[int] = self.pos
             self.pos: list[int] = state["digdug"]
             self.dir: Direction = self.get_digdug_direction()
+            print(self.dir.name)
             self.enemies: list[dict] = state["enemies"]
             self.previous_positions.append(self.pos)
             if 'rocks' in state:
