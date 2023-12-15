@@ -241,28 +241,18 @@ class Agent:
         :return: Either True or False.
         :rtype: bool
         """
-        for enemy in self.enemies:
-            if "name" in enemy and enemy["name"] == "Fygar":
-                if enemy["dir"] == Direction.NORTH and \
-                        digdug_new_pos[0] == enemy["pos"][0] and \
-                        digdug_new_pos[1] in (enemy["pos"][1] - 1, enemy["pos"][1] - 2, enemy["pos"][1] - 3, enemy["pos"][1] - 4):
-                    return True
+        direction_mapping: dict[Direction, Callable[[int, int, int, int], bool]] = {
+            Direction.NORTH: lambda dx, dy, ex, ey: (dx == ex and dy in (ey-1, ey-2, ey-3, ey-4)),
+            Direction.SOUTH: lambda dx, dy, ex, ey: (dx == ex and dy in (ey+1, ey+2, ey+3, ey+4)),
+            Direction.EAST: lambda dx, dy, ex, ey: (dy == ey and dx in (ex+1, ex+2, ex+3, ex+4)),
+            Direction.WEST: lambda dx, dy, ex, ey: (dy == ey and dx in (ex-1, ex-2, ex-3, ex-4)),
+        }
 
-                if enemy["dir"] == Direction.SOUTH and \
-                        digdug_new_pos[0] == enemy["pos"][0] and \
-                        digdug_new_pos[1] in (enemy["pos"][1] + 1, enemy["pos"][1] + 2, enemy["pos"][1] + 3, enemy["pos"][1] + 4):
-                    return True
-
-                if enemy["dir"] == Direction.EAST and \
-                        digdug_new_pos[1] == enemy["pos"][1] and \
-                        digdug_new_pos[0] in (enemy["pos"][0] + 1, enemy["pos"][0] + 2, enemy["pos"][0] + 3, enemy["pos"][0] + 4):
-                    return True
-
-                if enemy["dir"] == Direction.WEST and \
-                        digdug_new_pos[1] == enemy["pos"][1] and \
-                        digdug_new_pos[0] in (enemy["pos"][0] - 1, enemy["pos"][0] - 2, enemy["pos"][0] - 3, enemy["pos"][0] - 4):
-                    return True
-        return False
+        return any([
+            direction_mapping[enemy["dir"]](digdug_new_pos[0], digdug_new_pos[1], enemy["pos"][0], enemy["pos"][1])
+            for enemy in self.enemies
+            if "name" in enemy and enemy["name"] == "Fygar"
+        ])
 
     def is_in_loop(self) -> bool:
         """
