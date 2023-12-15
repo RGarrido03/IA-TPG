@@ -180,8 +180,8 @@ class Agent:
         y = self.pos[1] + dy
 
         if (0 <= x < self.map_size[0] and 0 <= y < self.map_size[1]
-                and not self.will_enemy_fire_at_digdug([x, y])
-                and [x, y] not in self.pos_rocks) and not self.check_dist_all_enemies([x, y]):
+                and [x, y] not in self.pos_rocks
+                and not self.check_dist_all_enemies([x, y])):
             self.map[x][y] = 0
 
             print("Real move after checks: ", direction.name)
@@ -212,7 +212,7 @@ class Agent:
             dx = enemy["pos"][0] - x
             dy = enemy["pos"][1] - y
 
-            if enemy["name"] == "Fygar" and self.will_enemy_fire_at_digdug([x, y]):
+            if enemy["name"] == "Fygar" and self.will_enemy_fire_at_digdug([x, y], enemy):
                 return True
             elif (dx, dy) in direction_mapping[new_dir]:
                 return True
@@ -248,11 +248,13 @@ class Agent:
                         chosen_enemy = enemy
         return chosen_enemy
 
-    def will_enemy_fire_at_digdug(self, digdug_new_pos: list[int]) -> bool:
+    def will_enemy_fire_at_digdug(self, digdug_new_pos: list[int], enemy: dict) -> bool:
         """
-        Check if any enemy will fire at DigDug in the next move.
-        :param digdug_new_pos: DigDug new position.
+        Check if the enemy will fire at DigDug in the next move.
+        :param digdug_new_pos: DigDug new position
         :type digdug_new_pos: list[int]
+        :param enemy: Enemy to check against
+        :type enemy: dict
         :return: Either True or False.
         :rtype: bool
         """
@@ -263,11 +265,7 @@ class Agent:
             Direction.WEST: lambda dx, dy, ex, ey: (dy == ey and dx in (ex-1, ex-2, ex-3, ex-4)),
         }
 
-        return any([
-            direction_mapping[enemy["dir"]](digdug_new_pos[0], digdug_new_pos[1], enemy["pos"][0], enemy["pos"][1])
-            for enemy in self.enemies
-            if "name" in enemy and enemy["name"] == "Fygar"
-        ])
+        return direction_mapping[enemy["dir"]](digdug_new_pos[0], digdug_new_pos[1], enemy["pos"][0], enemy["pos"][1])
 
     def is_in_loop(self) -> bool:
         """
@@ -393,7 +391,7 @@ class Agent:
             if dist <= 3:
                 if self.is_digdug_in_front_of_enemy(self.chosen_enemy) \
                         and self.is_map_digged_to_direction(chosen_dir) \
-                        and not self.will_enemy_fire_at_digdug([self.pos[0], self.pos[1]]) and not self.check_dist_all_enemies(self.pos):
+                        and not self.check_dist_all_enemies(self.pos):
                     self.previous_positions = []
                     self.steps +=1
                     return "A"
