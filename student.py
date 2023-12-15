@@ -190,29 +190,33 @@ class Agent:
 
         return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
 
-    def check_dist_all_enemies(self, digdug_pos: list[int]) -> bool:
+    def check_dist_all_enemies(self, new_pos: list[int]) -> bool:
         """
         Check if DigDug will be too close to any enemy, based on the position passed as argument.
-        :param digdug_pos: New DigDug position.
-        :type digdug_pos: list[int]
+        :param new_pos: New DigDug position.
+        :type new_pos: list[int]
         :return: Either True or False.
         :rtype: bool
         """
-        too_close = False
-        x, y = digdug_pos
-        for enemy in self.enemies:
-            if enemy["name"] == "Fygar" and self.map[x][y] == 1 and not self.will_enemy_fire_at_digdug([x, y]):
-                too_close = False
-            elif Direction.NORTH and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y)):
-                too_close = True
-            elif Direction.SOUTH and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
-                too_close = True
-            elif Direction.EAST and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] - 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
-                too_close = True
-            elif Direction.WEST and ((enemy["pos"][0] == x and enemy["pos"][1] == y) or (enemy["pos"][0] + 1 == x and enemy["pos"][1] == y) or (enemy["pos"][0] == x and enemy["pos"][1] + 1 == y) or (enemy["pos"][0] == x and enemy["pos"][1] - 1 == y)):
-                too_close = True
+        direction_mapping: dict[Direction, list[tuple]] = {
+            Direction.NORTH: [(0, 0), (-1, 0), (1, 0), (0, -1)],
+            Direction.SOUTH: [(0, 0), (-1, 0), (1, 0), (0, 1)],
+            Direction.EAST: [(0, 0), (1, 0), (0, -1), (0, 1)],
+            Direction.WEST: [(0, 0), (-1, 0), (0, -1), (0, 1)]
+        }
 
-        return too_close
+        new_dir = self.get_digdug_direction(new_pos, True)
+        x, y = new_pos
+
+        for enemy in self.enemies:
+            dx = enemy["pos"][0] - x
+            dy = enemy["pos"][1] - y
+
+            if enemy["name"] == "Fygar" and self.will_enemy_fire_at_digdug([x, y]):
+                return True
+            elif (dx, dy) in direction_mapping[new_dir]:
+                return True
+        return False
 
     def get_lower_cost_enemy(self, last_enemy: Union[dict, None] = None) -> dict:
         """
