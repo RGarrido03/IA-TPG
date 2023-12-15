@@ -11,7 +11,7 @@ import math
 import game
 from tree_search import *
 from consts import *
-from typing import Union
+from typing import Union, Callable
 
 
 class PointsGraph(SearchDomain):
@@ -106,14 +106,14 @@ class Agent:
         :return: Either True or False.
         :rtype: bool
         """
-        direction = self.dir
-        if direction == Direction.EAST and self.pos[1] == enemy["pos"][1] and self.pos[0] < enemy["pos"][0]:
-            return True
-        if direction == Direction.WEST and self.pos[1] == enemy["pos"][1] and self.pos[0] > enemy["pos"][0]:
-            return True
-        if direction == Direction.NORTH and self.pos[0] == enemy["pos"][0] and self.pos[1] > enemy["pos"][1]:
-            return True
-        if direction == Direction.SOUTH and self.pos[0] == enemy["pos"][0] and self.pos[1] < enemy["pos"][1]:
+        direction_mapping: dict[Direction, Callable[[int, int, int, int], bool]] = {
+            Direction.NORTH: lambda d0, d1, e0, e1: (d0 == e0 and d1 > e1),
+            Direction.SOUTH: lambda d0, d1, e0, e1: (d0 == e0 and d1 < e1),
+            Direction.WEST: lambda d0, d1, e0, e1: (d1 == e1 and d0 > e0),
+            Direction.EAST: lambda d0, d1, e0, e1: (d1 == e1 and d0 < e0),
+        }
+
+        if direction_mapping[self.dir](self.pos[0], self.pos[1], enemy["pos"][0], enemy["pos"][1]):
             return True
         return False
 
