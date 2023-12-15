@@ -64,7 +64,6 @@ class Agent:
         self.map: list = []
         self.map_size: list = []
         self.pos_rocks: list = []
-        self.previous_positions: list[list[int]] = []
         self.chosen_enemy: dict = {}
         self.steps: int = 0
         self.enemies_stuck: list = []
@@ -267,16 +266,6 @@ class Agent:
 
         return direction_mapping[enemy["dir"]](digdug_new_pos[0], digdug_new_pos[1], enemy["pos"][0], enemy["pos"][1])
 
-    def is_in_loop(self) -> bool:
-        """
-        Check if DigDug is in a loop.
-        Useful when enemies get smart.\n
-        I don't know if it's working properly.
-        :return: Either True or False.
-        :rtype: bool
-        """
-        return self.previous_positions.count(self.pos) > 5
-
     def get_key(self, state: dict) -> str:
         """
         Get the key to send to the server based on the current state.\n
@@ -292,9 +281,7 @@ class Agent:
             self.last_pos: list[int] = self.pos
             self.pos: list[int] = state["digdug"]
             self.dir: Direction = self.get_digdug_direction(self.pos)
-            print(self.dir.name)
             self.enemies: list[dict] = state["enemies"]
-            self.previous_positions.append(self.pos)
             if 'rocks' in state:
                 self.pos_rocks: list = [rock["pos"] for rock in state["rocks"]]
 
@@ -313,7 +300,6 @@ class Agent:
                 if self.chosen_enemy["id"] == last_enemy["id"] and self.steps > 300:
                     print("STUCK")
                     print("ENEMIES STUCK: ", self.chosen_enemy["id"])
-                    self.previous_positions = []
                     self.steps = 0
                     if len(self.enemies) > 1:
                         self.enemies_stuck.append(self.chosen_enemy["id"])
@@ -335,8 +321,6 @@ class Agent:
             print("\npos digdug: ", self.pos)
             print("\nenemies: " + str(self.enemies))
             print("\nchosen enemy:", self.chosen_enemy)
-            print("\nprevious positions: ", self.previous_positions)
-
 
             x_dist: int = self.chosen_enemy["x_dist"]
             y_dist: int = self.chosen_enemy["y_dist"]
@@ -364,17 +348,6 @@ class Agent:
                         return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
                     return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.EAST, Direction.WEST])
 
-            if self.is_in_loop():
-                self.previous_positions = []
-                if self.dir == Direction.EAST:
-                    return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
-                elif self.dir == Direction.WEST:
-                    return self.dig_map(Direction.WEST, [Direction.EAST, Direction.NORTH, Direction.SOUTH])
-                elif self.dir == Direction.NORTH:
-                    return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
-                elif self.dir == Direction.SOUTH:
-                    return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.WEST, Direction.EAST])
-
             # Move around the map
             def direction_mapping() -> tuple:
                 if abs(x_dist) >= abs(y_dist):
@@ -392,15 +365,13 @@ class Agent:
                 if self.is_digdug_in_front_of_enemy(self.chosen_enemy) \
                         and self.is_map_digged_to_direction(chosen_dir) \
                         and not self.check_dist_all_enemies(self.pos):
-                    self.previous_positions = []
-                    self.steps +=1
+                    self.steps += 1
                     return "A"
             return self.dig_map(chosen_dir, fallback)
 
         else:
             self.map: list[list[int]] = state["map"]
             self.map_size: list[int, int] = state["size"]
-            self.previous_positions = []
 
         return ""
 
