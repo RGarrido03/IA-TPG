@@ -69,21 +69,32 @@ class Agent:
         self.steps: int = 0
         self.enemies_stuck: list = []
 
-    def get_digdug_direction(self) -> Direction:
+    def get_digdug_direction(self, new: list[int], test: bool = False) -> Direction:
         """
-        Get DigDug position based on last and current positions.
+        Get DigDug position based on last/current or current/new positions.
+
+        The ``test`` argument decides whether this function call is a test or not.\n
+        If ``true``, it means that it is called from a place where several conditions are being tested,
+        and it does not represent the current DigDug state.\n
+        If ``false``, it is used to set the current DigDug direction.
+        :param new: Current or new position, depending on the context
+        :type new: list[int]
+        :param test: Argument
+        :type test: bool
         :return: DigDug direction
         :rtype: Direction
         """
+        last = self.last_pos if test is False else self.pos
+
         positions_mapping = {
-            lambda: self.pos[0] == self.last_pos[0] and self.pos[1] < self.last_pos[1]: Direction.NORTH,
-            lambda: self.pos[0] == self.last_pos[0] and self.pos[1] > self.last_pos[1]: Direction.SOUTH,
-            lambda: self.pos[0] < self.last_pos[0]: Direction.WEST,
-            lambda: self.pos[0] > self.last_pos[0]: Direction.EAST
+            lambda: new[0] == last[0] and new[1] < last[1]: Direction.NORTH,
+            lambda: new[0] == last[0] and new[1] > last[1]: Direction.SOUTH,
+            lambda: new[0] < last[0]: Direction.WEST,
+            lambda: new[0] > last[0]: Direction.EAST
         }
 
         # When the game/level starts, it has no last position
-        if not self.last_pos:
+        if not last:
             return self.dir
 
         return next((direction for condition, direction in positions_mapping.items() if condition()), self.dir)
@@ -278,7 +289,7 @@ class Agent:
             self.ts: float = state["ts"]
             self.last_pos: list[int] = self.pos
             self.pos: list[int] = state["digdug"]
-            self.dir: Direction = self.get_digdug_direction()
+            self.dir: Direction = self.get_digdug_direction(self.pos)
             print(self.dir.name)
             self.enemies: list[dict] = state["enemies"]
             self.previous_positions.append(self.pos)
