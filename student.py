@@ -322,13 +322,13 @@ class Agent:
                             self.checkAllstuck = False
                             self.steps = 0
                             if self.chosen_enemy["dir"] == 0:
-                                return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
-                            elif self.chosen_enemy["dir"] == 1:
                                 return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
+                            elif self.chosen_enemy["dir"] == 1:
+                                return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.WEST, Direction.EAST])
                             elif self.chosen_enemy["dir"] == 2:
-                                 return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
+                                 return self.dig_map(Direction.EAST, [Direction.WEST, Direction.SOUTH, Direction.NORTH])
                             elif self.chosen_enemy["dir"] == 3:
-                                return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
+                                return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
                         elif self.pos[1] < 2:
                             print("All stuck and pos[1] < 2")
                             self.checkAllstuck = True
@@ -340,7 +340,6 @@ class Agent:
                         self.chosen_enemy = enemies_not_stuck.pop(0)
                 elif self.chosen_enemy["id"] != last_enemy["id"]:
                     print("DIFFERENT ENEMY")
-                    self.steps = 0
                 else:
                     print("SAME ENEMY")
                     self.steps += 1
