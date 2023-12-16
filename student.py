@@ -291,7 +291,8 @@ class Agent:
             if not enemies_by_cost:
                 return ""
 
-            self.chosen_enemy = enemies_by_cost.pop(0)
+            enemies_not_stuck = [e for e in enemies_by_cost if e["id"] not in self.enemies_stuck]
+            self.chosen_enemy = enemies_not_stuck.pop(0) if len(enemies_not_stuck) > 0 else enemies_by_cost.pop(0)
 
             print("\nSTEPS: ", self.steps)
             print("CHOSEN ENEMY: ", self.chosen_enemy)
@@ -304,12 +305,12 @@ class Agent:
                     self.enemies_stuck.add(self.chosen_enemy["id"])
                     print("ENEMIES STUCK: ", self.enemies_stuck)
 
-                    if len(self.enemies_stuck) == len(enemies_by_cost) + 1:
+                    if len(enemies_not_stuck) == 0 and len(enemies_not_stuck) != len(enemies_by_cost) + 1:
                         print("All stuck")
-                        # TODO: Do something
+                        # TODO: Do something (dig map to let enemies go away)
                     else:
-                        while self.chosen_enemy["id"] in self.enemies_stuck:
-                            self.chosen_enemy = enemies_by_cost.pop(0)
+                        print("Choosing another")
+                        self.chosen_enemy = enemies_not_stuck.pop(0)
                 elif self.chosen_enemy["id"] != last_enemy["id"]:
                     print("DIFFERENT ENEMY")
                     self.steps = 0
