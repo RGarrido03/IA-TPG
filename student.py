@@ -217,19 +217,20 @@ class Agent:
                 return True
         return False
 
-    def get_lower_cost_enemy(self, last_enemy: Union[dict, None] = None) -> dict:
+    def get_lower_cost_enemy(self) -> list[dict]:
         """
         Get the enemy with the lowest cost to DigDug.\n
         It uses the A* algorithm to calculate the cost, even though its benefit is bare minimal.
         :return: Enemy with the lowest cost.
         :rtype: dict
         """
-        connections = [("digdug", enemy["id"], math.hypot(enemy["pos"][0] - self.pos[0], enemy["pos"][1] - self.pos[1])) for enemy in self.enemies]
+        enemies = []
+        connections = [("digdug", enemy["id"], math.hypot(enemy["pos"][0] - self.pos[0], enemy["pos"][1] - self.pos[1]))
+                       for enemy in self.enemies]
         coordinates = {character["id"]: tuple(character["pos"]) for character in self.enemies}
         coordinates["digdug"] = tuple(self.pos)
 
         map_points = PointsGraph(connections, coordinates)
-        chosen_enemy = {"pos": [0, 0], "cost": float("inf")}
 
         for enemy in self.enemies:
             if ("traverse" not in enemy or self.map[enemy['pos'][0]][enemy['pos'][1]] == 0) or len(self.enemies) == 1:
@@ -242,10 +243,10 @@ class Agent:
                 enemy["dist"]: int = abs(enemy["x_dist"]) + abs(enemy["y_dist"])
                 enemy["cost"] = t.cost
 
-                if (last_enemy is not None and enemy["id"] != last_enemy["id"]) or last_enemy is None:
-                    if enemy["cost"] < chosen_enemy["cost"]:
-                        chosen_enemy = enemy
-        return chosen_enemy
+                enemies.append(enemy)
+
+        enemies.sort(key=lambda e: e["cost"])
+        return enemies
 
     def will_enemy_fire_at_digdug(self, digdug_new_pos: list[int], enemy: dict) -> bool:
         """
@@ -286,7 +287,8 @@ class Agent:
                 self.pos_rocks: list = [rock["pos"] for rock in state["rocks"]]
 
             last_enemy = self.chosen_enemy
-            self.chosen_enemy = self.get_lower_cost_enemy()
+            enemies_by_cost = self.get_lower_cost_enemy()
+            self.chosen_enemy = enemies_by_cost.pop(0)
 
             if "dist" not in self.chosen_enemy:
                 return ""
@@ -302,10 +304,9 @@ class Agent:
                     print("ENEMIES STUCK: ", self.chosen_enemy["id"])
                     self.steps = 0
                     if len(self.enemies) > 1:
-                        self.enemies_stuck.append(self.chosen_enemy["id"])
-                        self.chosen_enemy = self.get_lower_cost_enemy(last_enemy)
+                        self.chosen_enemy = enemies_by_cost.pop(0)
                         while self.chosen_enemy["id"] in self.enemies_stuck:
-                            self.chosen_enemy = self.get_lower_cost_enemy(self.chosen_enemy)
+                            self.chosen_enemy = enemies_by_cost.pop(0)
                         if "id" not in self.chosen_enemy:
                             self.chosen_enemy = self.get_lower_cost_enemy()
                         print("NEW CHOSEN ENEMY: ", self.chosen_enemy)
