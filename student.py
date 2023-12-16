@@ -66,7 +66,7 @@ class Agent:
         self.pos_rocks: list = []
         self.chosen_enemy: dict = {}
         self.steps: int = 0
-        self.enemies_stuck: list = []
+        self.enemies_stuck = set()
 
     def get_digdug_direction(self, new: list[int], test: bool = False) -> Direction:
         """
@@ -184,7 +184,6 @@ class Agent:
             self.map[x][y] = 0
 
             print("Real move after checks: ", direction.name)
-            self.steps += 1
             return key
 
         return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
@@ -287,41 +286,36 @@ class Agent:
                 self.pos_rocks: list = [rock["pos"] for rock in state["rocks"]]
 
             last_enemy = self.chosen_enemy
-            enemies_by_cost = self.get_lower_cost_enemy()
-            self.chosen_enemy = enemies_by_cost.pop(0)
 
-            if "dist" not in self.chosen_enemy:
+            enemies_by_cost = self.get_lower_cost_enemy()
+            if not enemies_by_cost:
                 return ""
 
-            print("STEPS: ", self.steps)
+            self.chosen_enemy = enemies_by_cost.pop(0)
+
+            print("\nSTEPS: ", self.steps)
             print("CHOSEN ENEMY: ", self.chosen_enemy)
             print("LAST ENEMY: ", last_enemy)
 
             if "id" in last_enemy and "id" in self.chosen_enemy:
-
                 if self.chosen_enemy["id"] == last_enemy["id"] and self.steps > 300:
                     print("STUCK")
-                    print("ENEMIES STUCK: ", self.chosen_enemy["id"])
-                    self.steps = 0
-                    if len(self.enemies) > 1:
-                        self.chosen_enemy = enemies_by_cost.pop(0)
+                    self.steps += 1
+                    self.enemies_stuck.add(self.chosen_enemy["id"])
+                    print("ENEMIES STUCK: ", self.enemies_stuck)
+
+                    if len(self.enemies_stuck) == len(enemies_by_cost) + 1:
+                        print("All stuck")
+                        # TODO: Do something
+                    else:
                         while self.chosen_enemy["id"] in self.enemies_stuck:
                             self.chosen_enemy = enemies_by_cost.pop(0)
-                        if "id" not in self.chosen_enemy:
-                            self.chosen_enemy = self.get_lower_cost_enemy()
-                        print("NEW CHOSEN ENEMY: ", self.chosen_enemy)
-                    else:
-                        self.dig_map(Direction.NORTH, [Direction.WEST, Direction.EAST, Direction.SOUTH])
                 elif self.chosen_enemy["id"] != last_enemy["id"]:
                     print("DIFFERENT ENEMY")
                     self.steps = 0
                 else:
                     print("SAME ENEMY")
-
-            print("\n--------------------")
-            print("\npos digdug: ", self.pos)
-            print("\nenemies: " + str(self.enemies))
-            print("\nchosen enemy:", self.chosen_enemy)
+                    self.steps += 1
 
             x_dist: int = self.chosen_enemy["x_dist"]
             y_dist: int = self.chosen_enemy["y_dist"]
@@ -366,13 +360,14 @@ class Agent:
                 if self.is_digdug_in_front_of_enemy(self.chosen_enemy) \
                         and self.is_map_digged_to_direction(chosen_dir) \
                         and not self.check_dist_all_enemies(self.pos):
-                    self.steps += 1
                     return "A"
             return self.dig_map(chosen_dir, fallback)
 
         else:
             self.map: list[list[int]] = state["map"]
             self.map_size: list[int, int] = state["size"]
+            self.enemies_stuck = set()
+            self.steps = 0
 
         return ""
 
