@@ -1,3 +1,7 @@
+# Authors: 
+# - Diana Miranda, 107457
+# - Rúben Garrido, 107927
+
 """Example client."""
 import asyncio
 import getpass
