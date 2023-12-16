@@ -67,6 +67,7 @@ class Agent:
         self.chosen_enemy: dict = {}
         self.steps: int = 0
         self.enemies_stuck = set()
+        self.checkAllstuck = False
 
     def get_digdug_direction(self, new: list[int], test: bool = False) -> Direction:
         """
@@ -212,7 +213,7 @@ class Agent:
 
             if enemy["name"] == "Fygar" and self.will_enemy_fire_at_digdug([x, y], enemy):
                 return True
-            elif (dx, dy) in direction_mapping[new_dir]:
+            elif (dx, dy) in direction_mapping[new_dir] and (self.map[x][y] == 0 or enemy["name"] == "Pooka"):
                 return True
         return False
 
@@ -281,6 +282,9 @@ class Agent:
             self.last_pos: list[int] = self.pos
             self.pos: list[int] = state["digdug"]
             self.dir: Direction = self.get_digdug_direction(self.pos)
+
+            last_enemies = self.enemies
+
             self.enemies: list[dict] = state["enemies"]
             if 'rocks' in state:
                 self.pos_rocks: list = [rock["pos"] for rock in state["rocks"]]
@@ -290,6 +294,11 @@ class Agent:
             enemies_by_cost = self.get_lower_cost_enemy()
             if not enemies_by_cost:
                 return ""
+            
+            if len(self.enemies) < len(last_enemies):
+                self.enemies_stuck = set()
+                self.steps = 0
+                self.checkAllstuck = False
 
             enemies_not_stuck = [e for e in enemies_by_cost if e["id"] not in self.enemies_stuck]
             self.chosen_enemy = enemies_not_stuck.pop(0) if len(enemies_not_stuck) > 0 else enemies_by_cost.pop(0)
@@ -299,7 +308,7 @@ class Agent:
             print("LAST ENEMY: ", last_enemy)
 
             if "id" in last_enemy and "id" in self.chosen_enemy:
-                if self.chosen_enemy["id"] == last_enemy["id"] and self.steps > 300:
+                if self.chosen_enemy["id"] == last_enemy["id"] and self.steps > 200:
                     print("STUCK")
                     self.steps += 1
                     self.enemies_stuck.add(self.chosen_enemy["id"])
@@ -308,6 +317,24 @@ class Agent:
                     if len(enemies_not_stuck) == 0 and len(enemies_not_stuck) != len(enemies_by_cost) + 1:
                         print("All stuck")
                         # TODO: Do something (dig map to let enemies go away)
+                        if self.checkAllstuck:
+                            print("All stuck and steps > 300")
+                            self.checkAllstuck = False
+                            self.steps = 0
+                            if self.chosen_enemy["dir"] == 0:
+                                return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
+                            elif self.chosen_enemy["dir"] == 1:
+                                return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
+                            elif self.chosen_enemy["dir"] == 2:
+                                 return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
+                            elif self.chosen_enemy["dir"] == 3:
+                                return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
+                        elif self.pos[1] < 2:
+                            print("All stuck and pos[1] < 2")
+                            self.checkAllstuck = True
+                        else:
+                            print("All stuck and pos[1] > 2")
+                            return self.dig_map(Direction.NORTH, [Direction.WEST, Direction.EAST, Direction.SOUTH])
                     else:
                         print("Choosing another")
                         self.chosen_enemy = enemies_not_stuck.pop(0)
@@ -327,29 +354,29 @@ class Agent:
                 if x_dist == 1:
                     if y_dist in (0, -1, 1):
                         return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
-                    return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
+                    return self.dig_map(Direction.EAST, [Direction.WEST, Direction.SOUTH, Direction.NORTH])
 
                 elif x_dist == -1:
                     if y_dist in (-1, 0, 1):
-                        return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
+                        return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.WEST, Direction.EAST])
                     return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
 
                 elif y_dist == 1:
                     if x_dist in (-1, 0, 1):
-                        return self.dig_map(Direction.EAST, [Direction.WEST, Direction.NORTH, Direction.SOUTH])
+                        return self.dig_map(Direction.EAST, [Direction.WEST, Direction.SOUTH, Direction.NORTH])
                     return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
 
                 elif y_dist == -1:
                     if x_dist in (-1, 0, 1):
                         return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
-                    return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.EAST, Direction.WEST])
+                    return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.WEST, Direction.EAST])
 
             # Move around the map
             def direction_mapping() -> tuple:
                 if abs(x_dist) >= abs(y_dist):
                     if x_dist > 0:
                         return Direction.EAST, [Direction.SOUTH, Direction.NORTH, Direction.WEST]
-                    return Direction.WEST, [Direction.NORTH, Direction.SOUTH, Direction.EAST]
+                    return Direction.WEST, [Direction.SOUTH, Direction.NORTH, Direction.EAST]
                 else:
                     if y_dist > 0:
                         return Direction.SOUTH, [Direction.EAST, Direction.WEST, Direction.NORTH]
