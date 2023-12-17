@@ -172,8 +172,6 @@ class Agent:
                 and [x, y] not in self.pos_rocks
                 and not self.check_dist_all_enemies([x, y])):
             self.map[x][y] = 0
-
-            print("Real move after checks: ", direction.name)
             return key
 
         return self.dig_map(fallback[0] if len(fallback) > 0 else None, fallback[1:])
@@ -292,22 +290,14 @@ class Agent:
             enemies_not_stuck = [e for e in enemies_by_cost if e["id"] not in self.enemies_stuck]
             self.chosen_enemy = enemies_not_stuck.pop(0) if len(enemies_not_stuck) > 0 else enemies_by_cost.pop(0)
 
-            print("\nSTEPS: ", self.steps)
-            print("CHOSEN ENEMY: ", self.chosen_enemy)
-            print("LAST ENEMY: ", last_enemy)
-
             if "id" in last_enemy and "id" in self.chosen_enemy:
                 if self.chosen_enemy["id"] == last_enemy["id"] and self.steps > 200:
-                    print("STUCK")
                     self.steps += 1
                     self.enemies_stuck.add(self.chosen_enemy["id"])
-                    print("ENEMIES STUCK: ", self.enemies_stuck)
 
                     if len(enemies_not_stuck) == 0 and len(enemies_not_stuck) != len(enemies_by_cost) + 1:
-                        print("All stuck")
                         # TODO: Do something (dig map to let enemies go away)
                         if self.checkAllstuck:
-                            print("All stuck and steps > 300")
                             self.checkAllstuck = False
                             self.steps = 0
                             if self.chosen_enemy["dir"] == 0:
@@ -319,18 +309,12 @@ class Agent:
                             elif self.chosen_enemy["dir"] == 3:
                                 return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
                         elif self.pos[1] < 2:
-                            print("All stuck and pos[1] < 2")
                             self.checkAllstuck = True
                         else:
-                            print("All stuck and pos[1] > 2")
                             return self.dig_map(Direction.NORTH, [Direction.WEST, Direction.EAST, Direction.SOUTH])
                     else:
-                        print("Choosing another")
                         self.chosen_enemy = enemies_not_stuck.pop(0)
-                elif self.chosen_enemy["id"] != last_enemy["id"]:
-                    print("DIFFERENT ENEMY")
                 else:
-                    print("SAME ENEMY")
                     self.steps += 1
 
             x_dist: int = self.chosen_enemy["x_dist"]
