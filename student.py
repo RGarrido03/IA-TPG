@@ -1,4 +1,4 @@
-# Authors: 
+# Authors:
 # - Diana Miranda, 107457
 # - Rúben Garrido, 107927
 
@@ -25,7 +25,7 @@ class PointsGraph(SearchDomain):
 
     def actions(self, point) -> list:
         actlist = []
-        for (P1, P2, C) in self.connections:
+        for P1, P2, C in self.connections:
             if P1 == point:
                 actlist += [(P1, P2)]
             elif P2 == point:
@@ -94,14 +94,21 @@ class Agent:
             lambda: new[0] == last[0] and new[1] < last[1]: Direction.NORTH,
             lambda: new[0] == last[0] and new[1] > last[1]: Direction.SOUTH,
             lambda: new[0] < last[0]: Direction.WEST,
-            lambda: new[0] > last[0]: Direction.EAST
+            lambda: new[0] > last[0]: Direction.EAST,
         }
 
         # When the game/level starts, it has no last position
         if not last:
             return self.dir
 
-        return next((direction for condition, direction in positions_mapping.items() if condition()), self.dir)
+        return next(
+            (
+                direction
+                for condition, direction in positions_mapping.items()
+                if condition()
+            ),
+            self.dir,
+        )
 
     def is_digdug_in_front_of_enemy(self, enemy: dict) -> bool:
         """
@@ -119,7 +126,9 @@ class Agent:
             Direction.EAST: lambda d0, d1, e0, e1: (d1 == e1 and d0 < e0),
         }
 
-        return direction_mapping[self.dir](self.pos[0], self.pos[1], enemy["pos"][0], enemy["pos"][1])
+        return direction_mapping[self.dir](
+            self.pos[0], self.pos[1], enemy["pos"][0], enemy["pos"][1]
+        )
 
     def is_map_digged_to_direction(self, direction: Direction) -> bool:
         """
@@ -141,7 +150,11 @@ class Agent:
             return True
         return False
 
-    def dig_map(self, direction: Union[Direction, None], fallback: Union[list[Direction], None] = None) -> str:
+    def dig_map(
+        self,
+        direction: Union[Direction, None],
+        fallback: Union[list[Direction], None] = None,
+    ) -> str:
         """
         Dig the map in a certain direction.\n
         It checks multiple conditions, such as enemies, fire, map boundaries and rocks.
@@ -168,9 +181,12 @@ class Agent:
         x = self.pos[0] + dx
         y = self.pos[1] + dy
 
-        if (0 <= x < self.map_size[0] and 0 <= y < self.map_size[1]
-                and [x, y] not in self.pos_rocks
-                and not self.check_dist_all_enemies([x, y])):
+        if (
+            0 <= x < self.map_size[0]
+            and 0 <= y < self.map_size[1]
+            and [x, y] not in self.pos_rocks
+            and not self.check_dist_all_enemies([x, y])
+        ):
             self.map[x][y] = 0
             return key
 
@@ -188,7 +204,7 @@ class Agent:
             Direction.NORTH: [(0, 0), (-1, 0), (1, 0), (0, -1)],
             Direction.SOUTH: [(0, 0), (-1, 0), (1, 0), (0, 1)],
             Direction.EAST: [(0, 0), (1, 0), (0, -1), (0, 1)],
-            Direction.WEST: [(0, 0), (-1, 0), (0, -1), (0, 1)]
+            Direction.WEST: [(0, 0), (-1, 0), (0, -1), (0, 1)],
         }
 
         new_dir = self.get_digdug_direction(new_pos, True)
@@ -198,9 +214,13 @@ class Agent:
             dx = enemy["pos"][0] - x
             dy = enemy["pos"][1] - y
 
-            if enemy["name"] == "Fygar" and self.will_enemy_fire_at_digdug([x, y], enemy):
+            if enemy["name"] == "Fygar" and self.will_enemy_fire_at_digdug(
+                [x, y], enemy
+            ):
                 return True
-            elif (dx, dy) in direction_mapping[new_dir] and (self.map[x][y] == 0 or enemy["name"] == "Pooka"):
+            elif (dx, dy) in direction_mapping[new_dir] and (
+                self.map[x][y] == 0 or enemy["name"] == "Pooka"
+            ):
                 return True
         return False
 
@@ -212,17 +232,30 @@ class Agent:
         :rtype: dict
         """
         enemies = []
-        connections = [("digdug", enemy["id"], math.hypot(enemy["pos"][0] - self.pos[0], enemy["pos"][1] - self.pos[1]))
-                       for enemy in self.enemies]
-        coordinates = {character["id"]: tuple(character["pos"]) for character in self.enemies}
+        connections = [
+            (
+                "digdug",
+                enemy["id"],
+                math.hypot(
+                    enemy["pos"][0] - self.pos[0], enemy["pos"][1] - self.pos[1]
+                ),
+            )
+            for enemy in self.enemies
+        ]
+        coordinates = {
+            character["id"]: tuple(character["pos"]) for character in self.enemies
+        }
         coordinates["digdug"] = tuple(self.pos)
 
         map_points = PointsGraph(connections, coordinates)
 
         for enemy in self.enemies:
-            if ("traverse" not in enemy or self.map[enemy['pos'][0]][enemy['pos'][1]] == 0) or len(self.enemies) == 1:
-                p = SearchProblem(map_points, 'digdug', enemy["id"])
-                t = SearchTree(p, 'a*')
+            if (
+                "traverse" not in enemy
+                or self.map[enemy["pos"][0]][enemy["pos"][1]] == 0
+            ) or len(self.enemies) == 1:
+                p = SearchProblem(map_points, "digdug", enemy["id"])
+                t = SearchTree(p, "a*")
                 t.search()
 
                 enemy["x_dist"]: int = enemy["pos"][0] - self.pos[0]
@@ -246,13 +279,23 @@ class Agent:
         :rtype: bool
         """
         direction_mapping: dict[Direction, Callable[[int, int, int, int], bool]] = {
-            Direction.NORTH: lambda dx, dy, ex, ey: (dx == ex and dy in (ey-1, ey-2, ey-3, ey-4)),
-            Direction.SOUTH: lambda dx, dy, ex, ey: (dx == ex and dy in (ey+1, ey+2, ey+3, ey+4)),
-            Direction.EAST: lambda dx, dy, ex, ey: (dy == ey and dx in (ex+1, ex+2, ex+3, ex+4)),
-            Direction.WEST: lambda dx, dy, ex, ey: (dy == ey and dx in (ex-1, ex-2, ex-3, ex-4)),
+            Direction.NORTH: lambda dx, dy, ex, ey: (
+                dx == ex and dy in (ey - 1, ey - 2, ey - 3, ey - 4)
+            ),
+            Direction.SOUTH: lambda dx, dy, ex, ey: (
+                dx == ex and dy in (ey + 1, ey + 2, ey + 3, ey + 4)
+            ),
+            Direction.EAST: lambda dx, dy, ex, ey: (
+                dy == ey and dx in (ex + 1, ex + 2, ex + 3, ex + 4)
+            ),
+            Direction.WEST: lambda dx, dy, ex, ey: (
+                dy == ey and dx in (ex - 1, ex - 2, ex - 3, ex - 4)
+            ),
         }
 
-        return direction_mapping[enemy["dir"]](digdug_new_pos[0], digdug_new_pos[1], enemy["pos"][0], enemy["pos"][1])
+        return direction_mapping[enemy["dir"]](
+            digdug_new_pos[0], digdug_new_pos[1], enemy["pos"][0], enemy["pos"][1]
+        )
 
     def get_key(self, state: dict) -> str:
         """
@@ -273,7 +316,7 @@ class Agent:
             last_enemies = self.enemies
 
             self.enemies: list[dict] = state["enemies"]
-            if 'rocks' in state:
+            if "rocks" in state:
                 self.pos_rocks: list = [rock["pos"] for rock in state["rocks"]]
 
             last_enemy = self.chosen_enemy
@@ -281,36 +324,61 @@ class Agent:
             enemies_by_cost = self.get_lower_cost_enemy()
             if not enemies_by_cost:
                 return ""
-            
+
             if len(self.enemies) < len(last_enemies):
                 self.enemies_stuck = set()
                 self.steps = 0
                 self.checkAllstuck = False
 
-            enemies_not_stuck = [e for e in enemies_by_cost if e["id"] not in self.enemies_stuck]
-            self.chosen_enemy = enemies_not_stuck.pop(0) if len(enemies_not_stuck) > 0 else enemies_by_cost.pop(0)
+            enemies_not_stuck = [
+                e for e in enemies_by_cost if e["id"] not in self.enemies_stuck
+            ]
+
+            self.chosen_enemy = (
+                enemies_not_stuck.pop(0)
+                if len(enemies_not_stuck) > 0
+                else enemies_by_cost.pop(0)
+            )
 
             if "id" in last_enemy and "id" in self.chosen_enemy:
                 if self.chosen_enemy["id"] == last_enemy["id"] and self.steps > 200:
                     self.steps += 1
                     self.enemies_stuck.add(self.chosen_enemy["id"])
 
-                    if len(enemies_not_stuck) == 0 and len(enemies_not_stuck) != len(enemies_by_cost) + 1:
+                    if (
+                        len(enemies_not_stuck) == 0
+                        and len(enemies_not_stuck) != len(enemies_by_cost) + 1
+                    ):
                         if self.checkAllstuck:
                             self.checkAllstuck = False
                             self.steps = 0
                             if self.chosen_enemy["dir"] == 0:
-                                return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
+                                return self.dig_map(
+                                    Direction.WEST,
+                                    [Direction.EAST, Direction.SOUTH, Direction.NORTH],
+                                )
                             elif self.chosen_enemy["dir"] == 1:
-                                return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.WEST, Direction.EAST])
+                                return self.dig_map(
+                                    Direction.SOUTH,
+                                    [Direction.NORTH, Direction.WEST, Direction.EAST],
+                                )
                             elif self.chosen_enemy["dir"] == 2:
-                                 return self.dig_map(Direction.EAST, [Direction.WEST, Direction.SOUTH, Direction.NORTH])
+                                return self.dig_map(
+                                    Direction.EAST,
+                                    [Direction.WEST, Direction.SOUTH, Direction.NORTH],
+                                )
                             elif self.chosen_enemy["dir"] == 3:
-                                return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
+                                return self.dig_map(
+                                    Direction.NORTH,
+                                    [Direction.SOUTH, Direction.WEST, Direction.EAST],
+                                )
                         elif self.pos[1] < 2:
                             self.checkAllstuck = True
                         else:
-                            return self.dig_map(Direction.NORTH, [Direction.WEST, Direction.EAST, Direction.SOUTH])
+                            return self.dig_map(
+                                Direction.NORTH,
+                                [Direction.WEST, Direction.EAST, Direction.SOUTH],
+                            )
                     else:
                         self.chosen_enemy = enemies_not_stuck.pop(0)
                 else:
@@ -324,41 +392,83 @@ class Agent:
             if "dir" in self.chosen_enemy and self.dir == self.chosen_enemy["dir"]:
                 if x_dist == 1:
                     if y_dist in (0, -1, 1):
-                        return self.dig_map(Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
-                    return self.dig_map(Direction.EAST, [Direction.WEST, Direction.SOUTH, Direction.NORTH])
+                        return self.dig_map(
+                            Direction.NORTH,
+                            [Direction.SOUTH, Direction.WEST, Direction.EAST],
+                        )
+                    return self.dig_map(
+                        Direction.EAST,
+                        [Direction.WEST, Direction.SOUTH, Direction.NORTH],
+                    )
 
                 elif x_dist == -1:
                     if y_dist in (-1, 0, 1):
-                        return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.WEST, Direction.EAST])
-                    return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
+                        return self.dig_map(
+                            Direction.SOUTH,
+                            [Direction.NORTH, Direction.WEST, Direction.EAST],
+                        )
+                    return self.dig_map(
+                        Direction.WEST,
+                        [Direction.EAST, Direction.SOUTH, Direction.NORTH],
+                    )
 
                 elif y_dist == 1:
                     if x_dist in (-1, 0, 1):
-                        return self.dig_map(Direction.EAST, [Direction.WEST, Direction.SOUTH, Direction.NORTH])
-                    return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.EAST, Direction.WEST])
+                        return self.dig_map(
+                            Direction.EAST,
+                            [Direction.WEST, Direction.SOUTH, Direction.NORTH],
+                        )
+                    return self.dig_map(
+                        Direction.SOUTH,
+                        [Direction.NORTH, Direction.EAST, Direction.WEST],
+                    )
 
                 elif y_dist == -1:
                     if x_dist in (-1, 0, 1):
-                        return self.dig_map(Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH])
-                    return self.dig_map(Direction.SOUTH, [Direction.NORTH, Direction.WEST, Direction.EAST])
+                        return self.dig_map(
+                            Direction.WEST,
+                            [Direction.EAST, Direction.SOUTH, Direction.NORTH],
+                        )
+                    return self.dig_map(
+                        Direction.SOUTH,
+                        [Direction.NORTH, Direction.WEST, Direction.EAST],
+                    )
 
             # Move around the map
             def direction_mapping() -> tuple:
                 if abs(x_dist) >= abs(y_dist):
                     if x_dist > 0:
-                        return Direction.EAST, [Direction.SOUTH, Direction.NORTH, Direction.WEST]
-                    return Direction.WEST, [Direction.SOUTH, Direction.NORTH, Direction.EAST]
+                        return Direction.EAST, [
+                            Direction.SOUTH,
+                            Direction.NORTH,
+                            Direction.WEST,
+                        ]
+                    return Direction.WEST, [
+                        Direction.SOUTH,
+                        Direction.NORTH,
+                        Direction.EAST,
+                    ]
                 else:
                     if y_dist > 0:
-                        return Direction.SOUTH, [Direction.EAST, Direction.WEST, Direction.NORTH]
-                    return Direction.NORTH, [Direction.EAST, Direction.WEST, Direction.SOUTH]
+                        return Direction.SOUTH, [
+                            Direction.EAST,
+                            Direction.WEST,
+                            Direction.NORTH,
+                        ]
+                    return Direction.NORTH, [
+                        Direction.EAST,
+                        Direction.WEST,
+                        Direction.SOUTH,
+                    ]
 
             chosen_dir, fallback = direction_mapping()
 
             if dist <= 3:
-                if self.is_digdug_in_front_of_enemy(self.chosen_enemy) \
-                        and self.is_map_digged_to_direction(chosen_dir) \
-                        and not self.check_dist_all_enemies(self.pos):
+                if (
+                    self.is_digdug_in_front_of_enemy(self.chosen_enemy)
+                    and self.is_map_digged_to_direction(chosen_dir)
+                    and not self.check_dist_all_enemies(self.pos)
+                ):
                     return "A"
             return self.dig_map(chosen_dir, fallback)
 
@@ -381,17 +491,16 @@ async def agent_loop(server_address="localhost:8000", agent_name="student"):
         while True:
             try:
                 # Receive game update.
-                state: dict = json.loads(
-                    await websocket.recv()
-                )
+                state: dict = json.loads(await websocket.recv())
 
                 key: str = agent.get_key(state)
-                await websocket.send(
-                    json.dumps({"cmd": "key", "key": key})
-                )
+                await websocket.send(json.dumps({"cmd": "key", "key": key}))
 
                 # Time sync
-                time.sleep((1 / game.GAME_SPEED) - ((time.monotonic() - starttime) % (1 / game.GAME_SPEED)))
+                time.sleep(
+                    (1 / game.GAME_SPEED)
+                    - ((time.monotonic() - starttime) % (1 / game.GAME_SPEED))
+                )
             except websockets.exceptions.ConnectionClosedOK:
                 print("Server has cleanly disconnected us")
                 return
