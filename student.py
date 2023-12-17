@@ -121,21 +121,6 @@ class Agent:
 
         return direction_mapping[self.dir](self.pos[0], self.pos[1], enemy["pos"][0], enemy["pos"][1])
 
-    def are_digdug_and_enemy_facing_each_other(self, enemy: dict) -> bool:
-        """
-        Check if DigDug and the enemy are facing each other (i.e., are in opposite directions).
-        :param enemy: Enemy to check against.
-        :type enemy: dict
-        :return: Either True or False.
-        :rtype: bool
-        """
-        digdug_direction: Direction = self.dir
-        enemy_direction: Direction = enemy["dir"]
-
-        if enemy_direction > 1:
-            return digdug_direction == enemy_direction - 2
-        return digdug_direction == enemy_direction + 2
-
     def is_map_digged_to_direction(self, direction: Direction) -> bool:
         """
         Check whether the map point next to DigDug in a certain direction is digged or not.
