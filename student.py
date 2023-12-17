@@ -352,26 +352,16 @@ class Agent:
                         if self.checkAllstuck:
                             self.checkAllstuck = False
                             self.steps = 0
-                            if self.chosen_enemy["dir"] == Direction.NORTH:
-                                return self.dig_map(
-                                    Direction.WEST,
-                                    [Direction.EAST, Direction.SOUTH, Direction.NORTH],
-                                )
-                            elif self.chosen_enemy["dir"] == Direction.EAST:
-                                return self.dig_map(
-                                    Direction.SOUTH,
-                                    [Direction.NORTH, Direction.WEST, Direction.EAST],
-                                )
-                            elif self.chosen_enemy["dir"] == Direction.SOUTH:
-                                return self.dig_map(
-                                    Direction.EAST,
-                                    [Direction.WEST, Direction.SOUTH, Direction.NORTH],
-                                )
-                            elif self.chosen_enemy["dir"] == Direction.WEST:
-                                return self.dig_map(
-                                    Direction.NORTH,
-                                    [Direction.SOUTH, Direction.WEST, Direction.EAST],
-                                )
+
+                            dir_mapping: dict[Direction, tuple[Direction, list[Direction]]] = {
+                                Direction.NORTH: (Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH]),
+                                Direction.EAST: (Direction.SOUTH, [Direction.NORTH, Direction.WEST, Direction.EAST]),
+                                Direction.SOUTH: (Direction.EAST, [Direction.WEST, Direction.SOUTH, Direction.NORTH]),
+                                Direction.WEST: (Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
+                            }
+
+                            desired, fallback = dir_mapping[self.chosen_enemy["dir"]]
+                            return self.dig_map(desired, fallback)
                         elif self.pos[1] < 2:
                             self.checkAllstuck = True
                         else:
