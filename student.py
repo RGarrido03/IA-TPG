@@ -296,7 +296,6 @@ class Agent:
                     self.enemies_stuck.add(self.chosen_enemy["id"])
 
                     if len(enemies_not_stuck) == 0 and len(enemies_not_stuck) != len(enemies_by_cost) + 1:
-                        # TODO: Do something (dig map to let enemies go away)
                         if self.checkAllstuck:
                             self.checkAllstuck = False
                             self.steps = 0
