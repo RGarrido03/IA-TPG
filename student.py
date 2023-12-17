@@ -352,22 +352,22 @@ class Agent:
                         if self.checkAllstuck:
                             self.checkAllstuck = False
                             self.steps = 0
-                            if self.chosen_enemy["dir"] == 0:
+                            if self.chosen_enemy["dir"] == Direction.NORTH:
                                 return self.dig_map(
                                     Direction.WEST,
                                     [Direction.EAST, Direction.SOUTH, Direction.NORTH],
                                 )
-                            elif self.chosen_enemy["dir"] == 1:
+                            elif self.chosen_enemy["dir"] == Direction.EAST:
                                 return self.dig_map(
                                     Direction.SOUTH,
                                     [Direction.NORTH, Direction.WEST, Direction.EAST],
                                 )
-                            elif self.chosen_enemy["dir"] == 2:
+                            elif self.chosen_enemy["dir"] == Direction.SOUTH:
                                 return self.dig_map(
                                     Direction.EAST,
                                     [Direction.WEST, Direction.SOUTH, Direction.NORTH],
                                 )
-                            elif self.chosen_enemy["dir"] == 3:
+                            elif self.chosen_enemy["dir"] == Direction.WEST:
                                 return self.dig_map(
                                     Direction.NORTH,
                                     [Direction.SOUTH, Direction.WEST, Direction.EAST],
