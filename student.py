@@ -340,6 +340,7 @@ class Agent:
                 else enemies_by_cost.pop(0)
             )
 
+            # Check stuck enemies condition
             if "id" in last_enemy and "id" in self.chosen_enemy:
                 if self.chosen_enemy["id"] == last_enemy["id"] and self.steps > 200:
                     self.steps += 1
@@ -353,11 +354,25 @@ class Agent:
                             self.checkAllstuck = False
                             self.steps = 0
 
-                            dir_mapping: dict[Direction, tuple[Direction, list[Direction]]] = {
-                                Direction.NORTH: (Direction.WEST, [Direction.EAST, Direction.SOUTH, Direction.NORTH]),
-                                Direction.EAST: (Direction.SOUTH, [Direction.NORTH, Direction.WEST, Direction.EAST]),
-                                Direction.SOUTH: (Direction.EAST, [Direction.WEST, Direction.SOUTH, Direction.NORTH]),
-                                Direction.WEST: (Direction.NORTH, [Direction.SOUTH, Direction.WEST, Direction.EAST])
+                            dir_mapping: dict[
+                                Direction, tuple[Direction, list[Direction]]
+                            ] = {
+                                Direction.NORTH: (
+                                    Direction.WEST,
+                                    [Direction.EAST, Direction.SOUTH, Direction.NORTH],
+                                ),
+                                Direction.EAST: (
+                                    Direction.SOUTH,
+                                    [Direction.NORTH, Direction.WEST, Direction.EAST],
+                                ),
+                                Direction.SOUTH: (
+                                    Direction.EAST,
+                                    [Direction.WEST, Direction.SOUTH, Direction.NORTH],
+                                ),
+                                Direction.WEST: (
+                                    Direction.NORTH,
+                                    [Direction.SOUTH, Direction.WEST, Direction.EAST],
+                                ),
                             }
 
                             desired, fallback = dir_mapping[self.chosen_enemy["dir"]]
